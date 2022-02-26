@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name             = 'python-mecab-ner',
-    version          = '0.0.5',
+    version          = '0.1.3',
     description      = 'Test package for distribution',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -15,7 +15,6 @@ setup(
     url              = 'https://github.com/YoungchanChang/python-mecab-ner',
     download_url     = '',
     install_requires = ['pybind11 ~= 2.0', "python-mecab-ko ~= 1.0.12"],
-	packages=find_packages(),
     keywords         = ['Text Processing', 'Text Processing :: Linguistic', 'NER', "mecab", "mecab-ko", "mecab-ner"],
     python_requires  = '>=3.7',
     zip_safe=False,
@@ -27,5 +26,10 @@ setup(
         'Natural Language :: Korean',
         "Operating System :: OS Independent",
     ],
+    packages=find_packages(),
+    include_package_data=True,
+    package_data={
+        "": ["*.txt", "*.py"],
+    }
 )
 
