@@ -3,7 +3,7 @@ from collections import namedtuple
 from typing import Generator
 
 from mecab import MeCabError
-from domain.mecab_domain import MecabWordFeature
+from .domain.mecab_domain import MecabWordFeature
 
 
 def delete_pattern_from_string(string, pattern, index, nofail=False):
