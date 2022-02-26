@@ -1,3 +1,5 @@
 include LICENSE
 include README.md
 include requirements.txt
+include python_mecab_ner/data/ner_data/*.txt
+include python_mecab_ner/domain/*
