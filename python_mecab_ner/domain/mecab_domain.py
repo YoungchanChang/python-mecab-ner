@@ -4,8 +4,8 @@ from typing import Optional
 
 @dataclass
 class Category:
-    large_category: str
-    small_category: str
+    large: str
+    small: str
 
 
 @dataclass
