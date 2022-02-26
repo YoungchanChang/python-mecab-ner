@@ -23,17 +23,13 @@ class MecabDataReader:
 
     def __init__(self, ner_path: str = None):
         self.ner_path = ner_path or "./"
-        self._validate_path(ner_path)
+        self._validate_path(self.ner_path)
 
     @classmethod
     def _validate_path(cls, path) -> None:
         """ 경로 검증 """
         if not Path(path).is_dir():
-            raise MecabDataReaderException("Please check if directory")
-
-        for file in Path(path).iterdir():
-            if file.is_file() and file.suffix != cls.FORMAT_SUFFIX:
-                raise MecabDataReaderException("Please check if suffix")
+            raise MecabDataReaderException("Please check if directory is proper")
 
     @classmethod
     def read_category(cls, txt_data: List) -> Generator:
@@ -63,7 +59,8 @@ class MecabDataReader:
         """경로에 있는 데이터 읽은 뒤 카테고리 데이터셋으로 반환"""
 
         for path_item in Path(storage_path).iterdir():
-
+            if Path(path_item).suffix != cls.FORMAT_SUFFIX:
+                continue
             txt_data = cls.read_txt(path_item)
             c_d = CategoryData()
 
@@ -100,7 +97,7 @@ class MecabDataWriter(MecabDataReader):
     def __init__(self, ner_path: str = None, clear_dir=False):
         super().__init__(ner_path)
 
-        self.mecab_path = Path(ner_path).parent.joinpath(MecabDataWriter.MECAB_DATA)
+        self.mecab_path = Path(__file__).parent.joinpath("data", MecabDataWriter.MECAB_DATA)
 
         if clear_dir:
             self._clear_dir()
