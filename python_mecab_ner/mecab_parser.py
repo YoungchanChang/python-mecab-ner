@@ -2,8 +2,8 @@ import _mecab
 from collections import namedtuple
 from typing import Generator
 
-from dataclasses import dataclass
-from typing import Optional
+from mecab import MeCabError
+from domain.mecab_domain import MecabWordFeature
 
 
 def delete_pattern_from_string(string, pattern, index, nofail=False):
@@ -23,25 +23,6 @@ def delete_pattern_from_string(string, pattern, index, nofail=False):
     blank_pattern = len(pattern) * "*"
     # insert the new string between "slices" of the original
     return string[:index] + blank_pattern + string[index + len_pattern:]
-
-
-@dataclass
-class MecabWordFeature:
-    word: str
-    pos: str
-    semantic: str
-    has_jongseong: bool
-    reading: str
-    type : str
-    start_pos: str
-    end_pos: str
-    expression: str
-    space_token_idx: Optional[int] = None
-    mecab_token_idx: Optional[int] = None
-
-
-class MeCabError(Exception):
-    pass
 
 STRING_NOT_FOUND = -1
 
@@ -82,7 +63,7 @@ def _get_mecab_feature(node) -> MecabWordFeature:
     return MecabWordFeature(node.surface, **feature)
 
 
-class MeCabParser:
+class MecabParser:
 
     """
     문장을 형태소 분석하는 클래스.
@@ -134,8 +115,11 @@ class MeCabParser:
             mecab_token_feature.mecab_token_idx = mecab_token_idx
 
             space_token_idx = self._get_space_token_idx(mecab_token_feature)
+
             if space_token_idx is not False:
                 mecab_token_feature.space_token_idx = space_token_idx
+                mecab_token_feature.word = mecab_token_feature.word.lower()
+
                 yield mecab_token_feature
 
     def gen_mecab_compound_token_feature(self) -> Generator:
@@ -164,19 +148,18 @@ class MeCabParser:
         return " ".join([x[self.FIRST_WORD] for x in list(self.gen_mecab_compound_token_feature())])
 
 
-
 if __name__ == "__main__":
 
         test_sentence = "나는 서울대병원에 갔어"
 
         mecab_parse_results = list(
-            MeCabParser(test_sentence).gen_mecab_token_feature())
+            MecabParser(test_sentence).gen_mecab_token_feature())
 
         for idx, mecab_parse_item in enumerate(mecab_parse_results):
             print(mecab_parse_item)
 
         mecab_parse_results = list(
-            MeCabParser(test_sentence).gen_mecab_compound_token_feature())
+            MecabParser(test_sentence).gen_mecab_compound_token_feature())
 
         for idx, mecab_parse_item in enumerate(mecab_parse_results):
             print(mecab_parse_item)
