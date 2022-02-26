@@ -1,1 +1,1 @@
-from .mecab_parser import MeCabParser as MeCabParser
+from .mecab_parser import MecabParser as MecabParser
