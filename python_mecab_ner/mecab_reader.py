@@ -65,12 +65,10 @@ class MecabDataReader:
         for path_item in Path(storage_path).iterdir():
 
             txt_data = cls.read_txt(path_item)
-
             c_d = CategoryData()
 
             if not txt_data[cls.FIRST_WORD].startswith(cls.HEADER):
-                yield Category(large=path_item.stem, small=path_item.stem), {cls.HEADER + path_item.stem: txt_data}
-                continue
+                txt_data.insert(cls.FIRST_WORD, cls.HEADER + path_item.stem)
 
             for data_item in cls.read_category(txt_data):
 
@@ -81,7 +79,7 @@ class MecabDataReader:
 
                 c_d.add(data_header, contents)
 
-            yield Category(large=path_item.stem, small="#"), dict(c_d.data)
+            yield path_item.stem, dict(c_d.data)
 
     @staticmethod
     def read_txt(path):
@@ -118,21 +116,19 @@ class MecabDataWriter(MecabDataReader):
 
     def write_category(self) -> None:
         """카테고리별로 데이터 저장하는 메소드"""
+
         for data_item in self.gen_all_mecab_category_data(storage_path=self.ner_path, use_mecab_parser=True):
             category, content = data_item
 
             file_name = category.large + self.FORMAT_SUFFIX
             mecab_write_path = self.mecab_path.joinpath(file_name)
 
-            if isinstance(content, dict):
-                for content_key_item in content.keys():
-                    mecab_write_list = [content_key_item,]
-                    mecab_write_list.extend([str(x[self.ORIGIN_WORD]) + self.ITEM_BOUNDARY + str(x[self.MECAB_WORD]) for x in
-                                 content[content_key_item]])
-                    MecabDataWriter.write_txt(path=str(mecab_write_path), txt_list=mecab_write_list)
+            for content_key_item in content.keys():
+                mecab_write_list = [content_key_item,]
+                mecab_write_list.extend([str(x[self.ORIGIN_WORD]) + self.ITEM_BOUNDARY + str(x[self.MECAB_WORD]) for x in
+                             content[content_key_item]])
+                MecabDataWriter.write_txt(path=str(mecab_write_path), txt_list=mecab_write_list)
 
-            elif isinstance(content, list):
-                MecabDataWriter.write_txt(path=str(mecab_write_path), txt_list=content)
 
     @staticmethod
     def write_txt(path: str, txt_list: List, is_sort=False):
