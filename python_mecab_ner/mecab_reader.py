@@ -21,9 +21,9 @@ class MecabDataReader:
     FORMAT_SUFFIX = ".txt"
     HEADER = "#"
 
-    def __init__(self, ner_path: str):
+    def __init__(self, ner_path: str = None):
+        self.ner_path = ner_path or "./"
         self._validate_path(ner_path)
-        self.ner_path = ner_path
 
     @classmethod
     def _validate_path(cls, path) -> None:
@@ -97,7 +97,7 @@ class MecabDataWriter(MecabDataReader):
     MECAB_DATA = "mecab_data"
     CATEGORY_SPLITER = "_"
 
-    def __init__(self, ner_path: str, clear_dir=False):
+    def __init__(self, ner_path: str = None, clear_dir=False):
         super().__init__(ner_path)
 
         self.mecab_path = Path(ner_path).parent.joinpath(MecabDataWriter.MECAB_DATA)
@@ -110,9 +110,12 @@ class MecabDataWriter(MecabDataReader):
 
     def _clear_dir(self):
         """메캅 관련 디렉터리 전부 삭제하는 메소드"""
-        for path_item in Path(self.mecab_path).iterdir():
-            Path(path_item).unlink()
-        Path(self.mecab_path).rmdir()
+        try:
+            for path_item in Path(self.mecab_path).iterdir():
+                Path(path_item).unlink()
+            Path(self.mecab_path).rmdir()
+        except FileNotFoundError:
+            pass
 
     def write_category(self) -> None:
         """카테고리별로 데이터 저장하는 메소드"""
@@ -120,7 +123,7 @@ class MecabDataWriter(MecabDataReader):
         for data_item in self.gen_all_mecab_category_data(storage_path=self.ner_path, use_mecab_parser=True):
             category, content = data_item
 
-            file_name = category.large + self.FORMAT_SUFFIX
+            file_name = category + self.FORMAT_SUFFIX
             mecab_write_path = self.mecab_path.joinpath(file_name)
 
             for content_key_item in content.keys():
