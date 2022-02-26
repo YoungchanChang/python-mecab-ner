@@ -2,6 +2,7 @@ from typing import List, Generator
 from pathlib import Path
 from collections import defaultdict
 
+from domain.mecab_domain import Category
 from mecab_parser import MecabParser
 
 
@@ -11,7 +12,6 @@ class MecabDataReader:
     FORMAT_LIMIT = 2
     FIRST_WORD = 0
 
-    FORMAT_SPLITER = "_"
     FORMAT_SUFFIX = ".txt"
     HEADER = "#"
     ITEM_BOUNDARY = ","
@@ -57,7 +57,7 @@ class MecabDataReader:
             c_d = CategoryData()
 
             if not txt_data[cls.FIRST_WORD].startswith(cls.HEADER):
-                yield path_item.stem, txt_data
+                yield Category(large=path_item.stem, small=path_item.stem), txt_data
                 continue
 
             for data_item in cls.read_category(txt_data):
@@ -69,7 +69,7 @@ class MecabDataReader:
 
                 c_d.add(data_header, contents)
 
-            yield path_item.stem, dict(c_d.data)
+            yield Category(large=path_item.stem, small="#"), dict(c_d.data)
 
 
 class CategoryData:
