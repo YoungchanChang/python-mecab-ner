@@ -69,7 +69,7 @@ class MecabDataReader:
             c_d = CategoryData()
 
             if not txt_data[cls.FIRST_WORD].startswith(cls.HEADER):
-                yield Category(large=path_item.stem, small=path_item.stem), txt_data
+                yield Category(large=path_item.stem, small=path_item.stem), {cls.HEADER + path_item.stem: txt_data}
                 continue
 
             for data_item in cls.read_category(txt_data):
@@ -136,6 +136,7 @@ class MecabDataWriter(MecabDataReader):
 
     @staticmethod
     def write_txt(path: str, txt_list: List, is_sort=False):
+        """텍스트 파일 쓰는 메소드"""
         if is_sort:
             txt_list = sorted(list(txt_list), key=len, reverse=True)
 

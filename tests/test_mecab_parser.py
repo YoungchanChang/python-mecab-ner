@@ -41,13 +41,8 @@ def test_mecab_data_read(mecab_ner_dir):
     for data_item in m_g.gen_all_mecab_category_data(m_g.ner_path, use_mecab_parser=True):
         category, content = data_item
 
-        if isinstance(content, dict):
-            for contet_key_item in content.keys():
-                assert contet_key_item.startswith(MecabDataReader.HEADER)
-        elif isinstance(content, list):
-            assert category.large == category.small
-            if content[FIRST_WORD].startswith(MecabDataReader.HEADER):
-                raise AssertionError
+        if category.large == category.small:
+            assert (m_g.HEADER + category.small) == list(content.keys())[0]
 
 
 def test_mecab_data_write(mecab_ner_dir):
