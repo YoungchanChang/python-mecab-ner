@@ -1,4 +1,4 @@
-from python_mecab_ner.mecab_parser import MeCabParser
+from python_mecab_ner import MeCabParser
 
 if __name__ == "__main__":
 
