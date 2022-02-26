@@ -42,7 +42,7 @@ def test_mecab_data_read(mecab_ner_dir):
         category, content = data_item
 
         if category.large == category.small:
-            assert (m_g.HEADER + category.small) == list(content.keys())[0]
+            assert (m_g.HEADER + category.small) == list(content.keys())[FIRST_WORD]
 
 
 def test_mecab_data_write(mecab_ner_dir):
@@ -59,4 +59,4 @@ def test_mecab_data_write(mecab_ner_dir):
         stroage_data_len = len(MecabDataReader.read_txt(path_item))
         mecab_path_read = Path(path_item).parent.parent.joinpath(m_d_w.MECAB_DATA, path_item.name)
         mecab_data_len = len(MecabDataReader.read_txt(mecab_path_read))
-        assert stroage_data_len == mecab_data_len
+        assert stroage_data_len+1 >= mecab_data_len
