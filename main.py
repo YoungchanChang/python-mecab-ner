@@ -22,9 +22,9 @@ if __name__ == "__main__":
         storage_path = "./python_mecab_ner/data"
 
         # clear data
-        m_g = MecabDataReader(storage_path=storage_path)
+        m_g = MecabDataReader(ner_path=storage_path)
 
-        for data_item in m_g.gen_all_mecab_category_data(m_g.storage_path, use_mecab_parser=True):
+        for data_item in m_g.gen_all_mecab_category_data(m_g.ner_path, use_mecab_parser=True):
             header, content = data_item
             print(header)
             print(content)
