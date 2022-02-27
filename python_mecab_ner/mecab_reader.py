@@ -2,8 +2,8 @@ from typing import List, Generator
 from pathlib import Path
 from collections import defaultdict
 
-from .domain.mecab_exception import MecabDataReaderException
-from .mecab_parser import MecabParser
+from domain.mecab_exception import MecabDataReaderException
+from mecab_parser import MecabParser
 
 
 class CategoryData:
@@ -21,7 +21,7 @@ class MecabDataReader:
     FORMAT_SUFFIX = ".txt"
     HEADER = "#"
 
-    def __init__(self, ner_path: str = None, clear_mecab_dir=False):
+    def __init__(self, ner_path: str = None, clear_mecab_dir=True):
         self.ner_path = ner_path or "./"
         self._set_mecab_path(self.ner_path, clear_mecab_dir)
 
@@ -30,7 +30,7 @@ class MecabDataReader:
         if not Path(path).is_dir():
             raise MecabDataReaderException("Please check if directory is proper")
 
-        self.mecab_path = Path(__file__).parent.joinpath("data", MecabDataWriter.MECAB_DATA)
+        self.mecab_path = Path(__file__).parent.joinpath("data", self.MECAB_DATA)
 
         if clear_dir:
             self._clear_dir()
@@ -101,14 +101,11 @@ class MecabDataReader:
             txt_list = file.read().splitlines()
             return txt_list
 
-
-class MecabDataWriter(MecabDataReader):
     MECAB_WORD = 1
     ORIGIN_WORD = 0
 
     ITEM_BOUNDARY = ","
     CATEGORY_SPLITER = "_"
-
 
 
     def write_category(self) -> None:
@@ -124,7 +121,7 @@ class MecabDataWriter(MecabDataReader):
                 mecab_write_list = [content_key_item,]
                 mecab_write_list.extend([str(x[self.ORIGIN_WORD]) + self.ITEM_BOUNDARY + str(x[self.MECAB_WORD]) for x in
                              content[content_key_item]])
-                MecabDataWriter.write_txt(path=str(mecab_write_path), txt_list=mecab_write_list)
+                self.write_txt(path=str(mecab_write_path), txt_list=mecab_write_list)
 
 
     @staticmethod

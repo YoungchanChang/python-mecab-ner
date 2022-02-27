@@ -2,10 +2,10 @@ import copy
 from typing import List, Generator
 from pathlib import Path
 
-from .mecab_parser import MecabParser
-from .mecab_storage import MeCabStorage
-from .mecab_reader import MecabDataReader
-from .domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature, NerFeature
+from mecab_parser import MecabParser
+from mecab_storage import MeCabStorage
+from mecab_reader import MecabDataReader
+from domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature, NerFeature
 
 MECAB_WORD_FEATURE = 0
 INFER_FORWARD = 1
@@ -30,11 +30,6 @@ def find_patterns_idx(pattern, find_tokens: List, parse_character=False) -> List
             tmp_save_list.append((i, i+len(pattern)))
 
     return tmp_save_list
-
-
-
-
-
 
 
 
@@ -85,12 +80,14 @@ class MecabNer(MecabDataReader):
     FULL_WORD = 1
     ENTITY_POS_LIST = ["NNG", "NNP", "NNB", "NNBC", "NR", "NP", "XSN", "XR", "SL", "SH", "SN", "UNKNOWN"]
 
-    def __init__(self, ner_path: str = None, search_category: List = None, infer=True):
-        super().__init__(ner_path=ner_path, clear_mecab_dir=False)
+    def __init__(self, ner_path: str = None, search_category: List = None, infer=True, clear_mecab_dir=True):
+        super().__init__(ner_path=ner_path, clear_mecab_dir=clear_mecab_dir)
         self.search_category = search_category
+        self.write_category()
+
+        self.mecab_parsed_list = []
         if search_category is None:
             self.search_category = list(self._get_category_list())
-        self.mecab_parsed_list = []
         self.infer = infer
 
     def _get_category_list(self):
