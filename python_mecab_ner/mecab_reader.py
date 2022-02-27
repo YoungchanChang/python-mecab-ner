@@ -16,6 +16,7 @@ class CategoryData:
 
 class MecabDataReader:
     FIRST_WORD = 0
+    MECAB_DATA = "mecab_data"
 
     FORMAT_SUFFIX = ".txt"
     HEADER = "#"
@@ -106,7 +107,6 @@ class MecabDataWriter(MecabDataReader):
     ORIGIN_WORD = 0
 
     ITEM_BOUNDARY = ","
-    MECAB_DATA = "mecab_data"
     CATEGORY_SPLITER = "_"
 
 
