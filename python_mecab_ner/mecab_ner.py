@@ -1,13 +1,11 @@
-from pathlib import Path
-from typing import List, Generator
-
-
-from mecab_parser import MecabParser
-from domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature
 import copy
+from typing import List, Generator
+from pathlib import Path
 
-from mecab_storage import MeCabStorage
-from python_mecab_ner import MecabDataReader
+from .mecab_parser import MecabParser
+from .mecab_storage import MeCabStorage
+from .mecab_reader import MecabDataReader
+from .domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature
 
 
 MECAB_WORD_FEATURE = 0
