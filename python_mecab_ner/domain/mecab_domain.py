@@ -49,3 +49,10 @@ class MecabNerFeature:
     start_idx: int
     end_idx: int
     category: Optional[Category] = None
+
+
+@dataclass
+class NerFeature:
+    word: str
+    pos: str
+    category: Optional[Category] = None
