@@ -5,8 +5,7 @@ from pathlib import Path
 from .mecab_parser import MecabParser
 from .mecab_storage import MeCabStorage
 from .mecab_reader import MecabDataReader
-from .domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature
-
+from .domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature, NerFeature
 
 MECAB_WORD_FEATURE = 0
 INFER_FORWARD = 1
@@ -226,7 +225,7 @@ class MecabNer(MecabDataReader):
                     break
             if idx in cat_idx_list:
                 continue
-            parse_result.append((mecab_parse_item[1].word, MecabNerFeature(word=mecab_parse_item[self.MECAB_FEATURE_IDX].word, pos=mecab_parse_item[self.MECAB_FEATURE_IDX].pos, start_idx=idx, end_idx=idx)))
+            parse_result.append((mecab_parse_item[1].word, NerFeature(word=mecab_parse_item[self.MECAB_FEATURE_IDX].word, pos=mecab_parse_item[self.MECAB_FEATURE_IDX].pos)))
         return parse_result
 
     def morphs(self, sentence: str):
