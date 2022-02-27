@@ -1,3 +1,5 @@
+import copy
+
 import _mecab
 from collections import namedtuple
 from typing import Generator
@@ -122,7 +124,7 @@ class MecabParser:
 
                 yield mecab_token_feature
 
-    def gen_mecab_compound_token_feature(self) -> Generator:
+    def tokenize_mecab_compound(self) -> Generator:
 
         """
         메캅으로 분석한 토큰 제너레이터로 반환 결과 중에 복합여, 굴절형태소 있는 경우 토큰화
@@ -137,6 +139,12 @@ class MecabParser:
 
             else:
                 yield compound_include_item.word, compound_include_item
+
+    def gen_mecab_compound_token_feature(self):
+        for idx, x in enumerate(list(self.tokenize_mecab_compound())):
+            copy_x = copy.deepcopy(x)
+            copy_x[1].mecab_token_compound_idx = idx
+            yield copy_x
 
     def get_word_from_mecab_compound(self, is_list=False):
 
