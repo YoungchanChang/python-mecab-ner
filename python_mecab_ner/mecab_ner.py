@@ -88,24 +88,25 @@ class MecabNer(MecabDataReader):
     FULL_WORD = 1
     ENTITY_POS_LIST = ["NNG", "NNP", "NNB", "NNBC", "NR", "NP", "XSN", "XR", "SL", "SH", "SN", "UNKNOWN"]
 
-    def __init__(self, ner_path: str = None, search_category: List = None):
+    def __init__(self, ner_path: str = None, search_category: List = None, infer=True):
         super().__init__(ner_path=ner_path, clear_mecab_dir=False)
         self.search_category = search_category
         if search_category is None:
             self.search_category = list(self._get_category_list())
         self.mecab_parsed_list = []
+        self.infer = infer
+
     def _get_category_list(self):
         for path_item in Path(self.mecab_path).iterdir():
             if path_item.suffix == ".txt":
                 yield path_item.stem
 
-    def get_category_entity(self, sentence: str) -> Generator:
+    def get_category_entity(self) -> Generator:
         """
         문장에서 카테고리별로 엔티티 추출
         :param sentence: 엔티티를 찾고자 하는 문장
         :return: 추출 엔티티
         """
-        self.mecab_parsed_list = list(MecabParser(sentence=sentence).gen_mecab_compound_token_feature())
 
         for mecab_category_item in self.gen_all_mecab_category_data(storage_path=self.mecab_path, use_mecab_parser=False):
             mecab_parsed_copied = copy.deepcopy(self.mecab_parsed_list)
@@ -188,12 +189,11 @@ class MecabNer(MecabDataReader):
 
         return blank
 
-    def gen_mecab_category_entity(self, sentence: str):
+    def gen_mecab_category_entity(self):
 
-        self.mecab_parsed_list = list(MecabParser(sentence=sentence).gen_mecab_compound_token_feature())
 
         mecab_entity_category_list = []
-        for category_entity_item in self.get_category_entity(sentence=sentence):
+        for category_entity_item in self.get_category_entity():
             mecab_entity_category_list.append(self.infer_entity(self.mecab_parsed_list, category_entity_item))
 
         many_entity_index_list = self.fill_entity_in_blank(mecab_entity_category_list)
@@ -216,10 +216,9 @@ class MecabNer(MecabDataReader):
     def parse(self, sentence: str):
         self.mecab_parsed_list = list(MecabParser(sentence=sentence).gen_mecab_compound_token_feature())
 
-        mecab_cat_list = list(self.gen_mecab_category_entity(sentence=sentence))
+        mecab_cat_list = list(self.gen_mecab_category_entity())
         cat_idx_list=[]
         [cat_idx_list.extend(list(range(x.start_idx, x.end_idx, 1))) for x in mecab_cat_list]
-
 
         parse_result = []
         for idx, mecab_parse_item in enumerate(self.mecab_parsed_list):
@@ -229,12 +228,12 @@ class MecabNer(MecabDataReader):
                     break
             if idx in cat_idx_list:
                 continue
-            parse_result.append((mecab_parse_item[1].word, MecabNerFeature(word=mecab_parse_item[1].word, pos=mecab_parse_item[1].pos, start_idx=idx, end_idx=idx)))
+            parse_result.append((mecab_parse_item[1].word, MecabNerFeature(word=mecab_parse_item[self.MECAB_FEATURE_IDX].word, pos=mecab_parse_item[self.MECAB_FEATURE_IDX].pos, start_idx=idx, end_idx=idx)))
         return parse_result
 
-    def morphs(self, sentence: str, infer=True):
-        return [x[0] for x in self.parse(sentence=sentence)]
+    def morphs(self, sentence: str):
+        return [x[self.WORD_IDX] for x in self.parse(sentence=sentence)]
 
-    def ners(self, sentence: str, infer=True):
-        result = [(x[1].word, x[1].category.large, x[1].category.small) for x in self.parse(sentence=sentence) if x[1].pos == "ner"]
+    def ners(self, sentence: str):
+        result = [(x[self.MECAB_FEATURE_IDX].word, x[self.MECAB_FEATURE_IDX].category.large, x[self.MECAB_FEATURE_IDX].category.small) for x in self.parse(sentence=sentence) if x[self.MECAB_FEATURE_IDX].pos == "ner"]
         return result
