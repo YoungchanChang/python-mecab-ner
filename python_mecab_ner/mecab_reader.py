@@ -59,9 +59,15 @@ class MecabDataController:
     SMALL_CAT_DIVIDER = "#"
 
     def __init__(self, ner_path: str = None, clear_mecab_dir=True):
+
+        """
+        :param ner_path: ner 데이터 경로
+        :param clear_mecab_dir: 기존 메캅 디렉터리 삭제 여부
+        """
+
         self.ner_path = ner_path or "./"
-        self._set_mecab_path(self.ner_path)
         self._clear_mecab_dir = clear_mecab_dir
+        self._set_mecab_path(self.ner_path)
 
     def _set_mecab_path(self, ner_path: str) -> None:
 
