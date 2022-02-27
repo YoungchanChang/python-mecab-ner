@@ -19,6 +19,7 @@ class MecabWordCategory:
 @dataclass
 class MecabPatternData:
     category: Category
+    dictionary_data: str
     pattern: str
     sentence: list
     min_meaning: int = 0
