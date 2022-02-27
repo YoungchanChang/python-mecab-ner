@@ -39,3 +39,13 @@ class MecabWordFeature:
     expression: str
     space_token_idx: Optional[int] = None
     mecab_token_idx: Optional[int] = None
+    mecab_token_compound_idx: Optional[int] = None
+
+
+@dataclass
+class MecabNerFeature:
+    word: str
+    pos: str
+    start_idx: int
+    end_idx: int
+    category: Optional[Category] = None
