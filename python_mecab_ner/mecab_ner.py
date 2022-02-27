@@ -4,7 +4,7 @@ from pathlib import Path
 
 from mecab_parser import MecabParser
 from mecab_storage import MeCabStorage
-from mecab_reader import MecabDataReader
+from mecab_reader import MecabDataController
 from domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature, NerFeature
 
 MECAB_WORD_FEATURE = 0
@@ -61,7 +61,7 @@ def gen_integrated_entity(blank_list: List) -> Generator:
             continue
 
 
-class MecabNer(MecabDataReader):
+class MecabNer(MecabDataController):
     """
     엔티티 추출하는 클래스
     - 앞에 단어 품사를 통한 추론 기능
@@ -102,7 +102,7 @@ class MecabNer(MecabDataReader):
         :return: 추출 엔티티
         """
 
-        for mecab_category_item in self.gen_all_mecab_category_data(storage_path=self.mecab_path, use_mecab_parser=False):
+        for mecab_category_item in self.gen_all_mecab_category_data(path=self.mecab_path, use_mecab_parser=False):
             mecab_parsed_copied = copy.deepcopy(self.mecab_parsed_list)
             category, mecab_dictionary_data = mecab_category_item
             if category not in self.search_category:
