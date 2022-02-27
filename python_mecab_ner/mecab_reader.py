@@ -2,8 +2,8 @@ from typing import List, Generator
 from pathlib import Path
 from collections import defaultdict
 
-from .domain.mecab_exception import MecabDataReaderException
-from .mecab_parser import MecabParser
+from domain.mecab_exception import MecabDataReaderException
+from mecab_parser import MecabParser
 
 
 class CategoryData:
@@ -20,15 +20,31 @@ class MecabDataReader:
     FORMAT_SUFFIX = ".txt"
     HEADER = "#"
 
-    def __init__(self, ner_path: str = None):
+    def __init__(self, ner_path: str = None, clear_mecab_dir=False):
         self.ner_path = ner_path or "./"
-        self._validate_path(self.ner_path)
+        self._set_mecab_path(self.ner_path, clear_mecab_dir)
 
-    @classmethod
-    def _validate_path(cls, path) -> None:
+    def _set_mecab_path(self, path, clear_dir) -> None:
         """ 경로 검증 """
         if not Path(path).is_dir():
             raise MecabDataReaderException("Please check if directory is proper")
+
+        self.mecab_path = Path(__file__).parent.joinpath("data", MecabDataWriter.MECAB_DATA)
+
+        if clear_dir:
+            self._clear_dir()
+
+        if not Path(self.mecab_path).exists():
+            Path(self.mecab_path).mkdir()
+
+    def _clear_dir(self):
+        """메캅 관련 디렉터리 전부 삭제하는 메소드"""
+        try:
+            for path_item in Path(self.mecab_path).iterdir():
+                Path(path_item).unlink()
+            Path(self.mecab_path).rmdir()
+        except FileNotFoundError:
+            pass
 
     @classmethod
     def read_category(cls, txt_data: List) -> Generator:
@@ -93,25 +109,7 @@ class MecabDataWriter(MecabDataReader):
     MECAB_DATA = "mecab_data"
     CATEGORY_SPLITER = "_"
 
-    def __init__(self, ner_path: str = None, clear_dir=False):
-        super().__init__(ner_path)
 
-        self.mecab_path = Path(__file__).parent.joinpath("data", MecabDataWriter.MECAB_DATA)
-
-        if clear_dir:
-            self._clear_dir()
-
-        if not Path(self.mecab_path).exists():
-            Path(self.mecab_path).mkdir()
-
-    def _clear_dir(self):
-        """메캅 관련 디렉터리 전부 삭제하는 메소드"""
-        try:
-            for path_item in Path(self.mecab_path).iterdir():
-                Path(path_item).unlink()
-            Path(self.mecab_path).rmdir()
-        except FileNotFoundError:
-            pass
 
     def write_category(self) -> None:
         """카테고리별로 데이터 저장하는 메소드"""
