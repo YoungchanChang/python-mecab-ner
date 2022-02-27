@@ -17,6 +17,15 @@ class MecabWordCategory:
 
 
 @dataclass
+class MecabPatternData:
+    category: Category
+    pattern: str
+    sentence: list
+    min_meaning: int = 0
+    parse_character: bool = False
+
+
+@dataclass
 class MecabWordFeature:
     word: str
     pos: str
