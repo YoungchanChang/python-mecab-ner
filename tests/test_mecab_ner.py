@@ -42,3 +42,17 @@ def test_mecab_ner_current_dir():
     python_mecab_ner_dir = Path(__file__).resolve().parent.parent.joinpath("python_mecab_ner", "data", "ner_data")
     m_d_w = MecabDataWriter(str(python_mecab_ner_dir), clear_mecab_dir=True)
     m_d_w.write_category()
+
+
+
+
+def test_mecab_data_write(mecab_ner_dir):
+
+    """
+    ner_data를 읽은 뒤, mecab_data로 전환하는 테스트 코드
+    - ner_data에서 읽었을 때의 개수와, mecab_data에서 읽었을 때의 개수가 같아야 한다.
+    """
+
+    m_n = MecabNer()
+    for entity_item in m_n.get_category_entity("가봉에 가서 감이 먹고싶네"):
+        print(entity_item)
