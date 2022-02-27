@@ -52,7 +52,7 @@ def test_mecab_data_write(mecab_ner_dir):
     - ner_data에서 읽었을 때의 개수와, mecab_data에서 읽었을 때의 개수가 같아야 한다.
     """
 
-    m_d_w = MecabDataWriter(ner_path=str(mecab_ner_dir["python_mecab_ner"]), clear_dir=True)
+    m_d_w = MecabDataWriter(ner_path=str(mecab_ner_dir["python_mecab_ner"]), clear_mecab_dir=True)
     m_d_w.write_category()
 
     for path_item in Path(m_d_w.ner_path).iterdir():
@@ -60,3 +60,4 @@ def test_mecab_data_write(mecab_ner_dir):
         mecab_path_read = Path(path_item).parent.parent.joinpath(m_d_w.MECAB_DATA, path_item.name)
         mecab_data_len = len(MecabDataReader.read_txt(mecab_path_read))
         assert stroage_data_len+1 >= mecab_data_len
+
