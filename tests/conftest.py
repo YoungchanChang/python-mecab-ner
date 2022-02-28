@@ -14,7 +14,7 @@ def parser_check():
 
 @pytest.fixture(scope="function")
 def mock_mecab_parser_sentence():
-    data = {"compound_count_2" : "나는 서울대병원에 갔어"}
+    data = {"병원_sentence" : "나는 서울대병원에 갔어"}
     return data
 
 

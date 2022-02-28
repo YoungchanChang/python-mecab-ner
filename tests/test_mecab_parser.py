@@ -29,23 +29,32 @@ def test_parser_check(parser_check):
 def test_gen_mecab_token_feature(mock_mecab_parser_sentence: dict):
 
     """
-    mecab_parser의 주요 기능 테스트
+    mecab_parser 기본 분해, 복합어 분해 기능 테스트
     1. 복합어로 나누었을 때 개수가 맞는지
     2. 형태소 분석된 토큰 정보가 들어가 있는지
     """
 
-    mecab_parse_results = list(MecabParser(mock_mecab_parser_sentence.get("compound_count_2")).gen_mecab_token_feature())
+    # 기본 분해
+    mecab_parse_results = list(MecabParser(mock_mecab_parser_sentence.get("병원_sentence")).gen_mecab_token_feature())
 
     assert len(mecab_parse_results) == 7
 
     for idx, mecab_parse_item in enumerate(mecab_parse_results):
         assert mecab_parse_item.mecab_token_idx == idx
 
+    parse_sentence = " ".join([x.word for x in mecab_parse_results])
+    assert parse_sentence == '나 는 서울대 병원 에 갔 어'
 
-    mecab_parse_results = list(MecabParser(mock_mecab_parser_sentence.get("compound_count_2")).gen_mecab_compound_token_feature())
+    # 복합어 분해 테스트
+    mecab_parse_results = list(MecabParser(mock_mecab_parser_sentence.get("병원_sentence")).gen_mecab_compound_token_feature())
+
+    for idx, mecab_parse_item in enumerate(mecab_parse_results):
+        assert mecab_parse_item[1].mecab_token_compound_idx == idx
 
     assert len(mecab_parse_results) == 9
 
+    parse_sentence = " ".join([x[0] for x in mecab_parse_results])
+    assert parse_sentence == '나 는 서울 대 병원 에 가 았 어'
 
 def test_mecab_data_read(mecab_ner_dir):
 
