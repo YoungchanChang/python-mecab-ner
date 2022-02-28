@@ -1,7 +1,29 @@
 from pathlib import Path
 
-from service.mecab_reader import MecabDataController, MecabDataWriter
+from service.mecab_reader import MecabDataController
 from service.mecab_parser import MecabParser
+
+
+def test_parser_check(parser_check):
+    """
+    메캅이 한 단어 일 때 분석하는 경우랑, 문장에서 단어로 쓰여서 다르게 파싱되는 경우에 대한 예시
+    """
+    result = MecabParser(parser_check.get("프룬_word")).get_word_from_mecab_compound()
+    assert result == "프 루 ᆫ"
+    result = MecabParser(parser_check.get("프룬_sentence")).get_word_from_mecab_compound()
+    assert result == "프 룬 이 먹 고 싶 어"
+
+    result = MecabParser(parser_check.get("의창지_word")).get_word_from_mecab_compound()
+    assert result == "의창 하 지"
+
+    result = MecabParser(parser_check.get("의창지_sentence")).get_word_from_mecab_compound()
+    assert result == '의창 지 를 먹 고 싶 어'
+
+    result = MecabParser(parser_check.get("금요일_word")).get_word_from_mecab_compound()
+    assert result == '금 요일 에 만나 요'
+
+    result = MecabParser(parser_check.get("금요일_sentence")).get_word_from_mecab_compound()
+    assert result == '아이유 의 금 요일 에 만나 요 를 듣 으면서 라즈베리 를 먹 을래'
 
 
 def test_gen_mecab_token_feature(mock_mecab_parser_sentence: dict):

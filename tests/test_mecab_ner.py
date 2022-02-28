@@ -1,23 +1,8 @@
 from pathlib import Path
 
 from mecab_ner import MecabNer
-from python_mecab_ner import MecabDataWriter, MecabParser
+from service.mecab_parser import MecabParser
 
-
-def test_mecab_diff_parse_data():
-    """
-    메캅이 한 단어 일 때 분석하는 경우랑, 문장에서 단어로 쓰여서 분석하는 경우 추가
-    """
-    result = MecabParser("프룬").get_word_from_mecab_compound()
-    assert result == "프 루 ᆫ"
-    result = MecabParser("프룬이 먹고 싶어").get_word_from_mecab_compound()
-    assert result == "프 룬 이 먹 고 싶 어"
-
-    result = MecabParser("의창지").get_word_from_mecab_compound()
-    assert result == "의창 하 지"
-
-    result = MecabParser("의창지를 먹고 싶어").get_word_from_mecab_compound()
-    assert result == '의창 지 를 먹 고 싶 어'
 
 
 def test_mecab_ner_current_dir():
