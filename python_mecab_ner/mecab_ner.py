@@ -148,8 +148,7 @@ class MecabNer(MecabDataController):
                 for small_category_item in mecab_dictionary_data.get(small_category):
 
                     original_data, mecab_data = small_category_item.split(",")
-                    if original_data == "금요일에 만나요":
-                        a = 4
+
                     category_data = Category(large=category, small=small_category)
                     yield from self._get_pattern(MecabPatternData(category=category_data, dictionary_data=original_data, pattern=mecab_data, sentence=mecab_parsed_copied))
                     yield from self._get_pattern(MecabPatternData(category=category_data, dictionary_data=original_data, pattern=original_data, sentence=mecab_parsed_copied, min_meaning=2, parse_character=True))
