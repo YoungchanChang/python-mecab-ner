@@ -98,8 +98,10 @@ class MecabDataController:
 
         try:
             for path_item in Path(self.mecab_path).iterdir():
-                if path_item.stem.startswith("ner_example"):
+
+                if path_item.stem.startswith("ner_example"): # 예시코드 삭제 방지 코드
                     continue
+
                 Path(path_item).unlink()
 
         except FileNotFoundError:
@@ -174,6 +176,9 @@ class MecabDataController:
 
             file_name = category + self.FORMAT_SUFFIX
             mecab_write_path = self.mecab_path.joinpath(file_name)
+
+            if file_name.startswith("ner_example"): # 예시코드 실행시 추가 방지 코드
+                continue
 
             for content_key_item in content.keys():
                 mecab_write_list = [content_key_item,]
