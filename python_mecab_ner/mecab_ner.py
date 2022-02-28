@@ -165,8 +165,6 @@ class MecabNer(MecabDataController):
         if (len(m_p_d.pattern) >= m_p_d.min_meaning) and space_token_contain_pattern:
             for pattern_item in space_token_contain_pattern:
 
-                pattern_end_pos = m_p_d.sentence[pattern_item[END_IDX] - 1][MECAB_FEATURE].pos
-
                 _prevent_compound_token(pattern_item, m_p_d.sentence)
 
                 yield MecabWordCategory(category=m_p_d.category,
