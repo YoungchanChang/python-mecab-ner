@@ -2,10 +2,10 @@ import copy
 from typing import List, Generator, Iterable
 from pathlib import Path
 
-from .service.mecab_parser import MecabParser
-from .service.mecab_storage import MecabStorage
-from .service.mecab_reader import MecabDataController
-from .domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature, NerFeature
+from service.mecab_parser import MecabParser
+from service.mecab_storage import MecabStorage
+from service.mecab_reader import MecabDataController
+from domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature, NerFeature
 
 MECAB_READING_WORD = 0
 MECAB_FEATURE = 1
@@ -108,6 +108,7 @@ class MecabNer(MecabDataController):
 
     MIN_MEANING = 2
     NER_POS = "ner"
+    ENTITY_POS_LIST = ["NNG", "NNP", "NNB", "NNBC", "NR", "NP", "XSN", "XR", "SL", "SH", "SN", "UNKNOWN"]
     INFER_ENTITY_POS_LIST = ["NNG", "NNP"]
 
     def __init__(self, ner_path: str = None, search_category: List = None, infer=True, clear_mecab_dir=True):
@@ -164,6 +165,11 @@ class MecabNer(MecabDataController):
 
         if (len(m_p_d.pattern) >= m_p_d.min_meaning) and space_token_contain_pattern:
             for pattern_item in space_token_contain_pattern:
+
+                pattern_end_pos = m_p_d.sentence[pattern_item[END_IDX] - 1][MECAB_FEATURE].pos
+
+                if pattern_end_pos not in self.ENTITY_POS_LIST and len(m_p_d.pattern) < self.MIN_MEANING:
+                    continue
 
                 _prevent_compound_token(pattern_item, m_p_d.sentence)
 
