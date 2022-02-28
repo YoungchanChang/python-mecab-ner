@@ -2,9 +2,9 @@ import copy
 from typing import List, Generator, Iterable
 from pathlib import Path
 
-from mecab_parser import MecabParser
-from mecab_storage import MeCabStorage
-from mecab_reader import MecabDataController
+from service.mecab_parser import MecabParser
+from service.mecab_storage import MeCabStorage
+from service.mecab_reader import MecabDataController
 from domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature, NerFeature
 
 MECAB_READING_WORD = 0
