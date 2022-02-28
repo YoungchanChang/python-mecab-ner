@@ -101,7 +101,7 @@ class MecabDataController:
                 if path_item.stem.startswith("ner_example"):
                     continue
                 Path(path_item).unlink()
-            Path(self.mecab_path).rmdir()
+
         except FileNotFoundError:
             pass
 
