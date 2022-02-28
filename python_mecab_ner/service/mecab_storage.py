@@ -6,7 +6,7 @@ NODE_EXPRESSION = 1
 MECAB_WORD_FEATURE = 1
 IDX_TOKEN = 0
 
-class MeCabStorage:
+class MecabStorage:
 
     """
     메캅 형태소 분석 결과를 원래 문장으로 복원

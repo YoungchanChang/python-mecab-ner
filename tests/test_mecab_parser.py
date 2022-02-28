@@ -114,3 +114,19 @@ def test_mecab_data_controller(mecab_ner_dir):
     with pytest.raises(AssertionError):
         assert "test_computer.txt" in mecab_data_list
         assert "test_coffee.txt" in mecab_data_list
+
+
+def test_mecab_storage(mock_mecab_parser_sentence):
+
+    """ 파싱 후 restore하는 기능 테스트"""
+    z = list(MecabParser(mock_mecab_parser_sentence.get("병원_sentence")).get_word_from_mecab_compound())
+
+    restore_sentence = MecabStorage().restore_mecab_tokens(mecab_parse_results)
+
+    assert len(restore_sentence) == 3
+
+    mecab_parse_results = list(MeCabParser(mock_mecab_parser_sentence.get("compound_count_2")).gen_mecab_compound_token_feature())
+
+    restore_sentence = MeCabStorage().reverse_compound_tokens(mecab_parse_results)
+
+    assert len(restore_sentence) == 3
