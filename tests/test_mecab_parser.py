@@ -114,16 +114,3 @@ def test_mecab_data_controller(mecab_ner_dir):
     with pytest.raises(AssertionError):
         assert "test_computer.txt" in mecab_data_list
         assert "test_coffee.txt" in mecab_data_list
-
-
-    # m_d_w = MecabDataController(ner_path=str(mecab_ner_dir["python_mecab_ner"]), clear_mecab_dir=True)
-    # m_d_w.write_category()
-    # for path_item in Path(m_d_w.ner_path).iterdir():
-    #     assert "test_computer.txt" != path_item.name
-    #     assert "test_coffee.txt" != path_item.name
-
-    # m_d_w = MecabDataController(ner_path=str(mecab_ner_dir["python_mecab_ner"]), clear_mecab_dir=True)
-    # m_d_w.write_category()
-
-    # m_d_w = MecabDataController(ner_path=str(mecab_ner_dir["python_mecab_ner"]), clear_mecab_dir=True)
-    # m_d_w.write_category()
