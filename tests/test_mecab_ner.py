@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from domain.mecab_domain import NerFeature, Category
 from mecab_ner import MecabNer, gen_integrated_entity
 from service.mecab_parser import MecabParser
 
@@ -14,6 +15,7 @@ def test_mecab_ner_simple():
     test_sentence = "아이유의 금요일에 만나요를 들으면서 신촌 딸기를 먹을래"
     parse_result = m_n.parse(test_sentence)
     assert len(parse_result) == 10
+    assert parse_result == [('아이유', NerFeature(word='아이유', pos='ner', category=Category(large='ner_example_music_singer', small='가수'))), ('의', NerFeature(word='의', pos='JKG', category=None)), ('금요일에 만나요', NerFeature(word='금요일에 만나요', pos='ner', category=Category(large='ner_example_music_song', small='노래'))), ('를', NerFeature(word='를', pos='JKO', category=None)), ('듣', NerFeature(word='듣', pos='VV+EC', category=None)), ('으면서', NerFeature(word='으면서', pos='VV+EC', category=None)), ('신촌 딸기', NerFeature(word='신촌 딸기', pos='ner', category=Category(large='ner_example_fruit', small='과일'))), ('를', NerFeature(word='를', pos='JKO', category=None)), ('먹', NerFeature(word='먹', pos='VV', category=None)), ('을래', NerFeature(word='을래', pos='EC', category=None))]
 
     morphs_result = m_n.morphs(test_sentence)
     assert morphs_result == ['아이유', '의', '금요일에 만나요', '를', '듣', '으면서', '신촌 딸기', '를', '먹', '을래']
