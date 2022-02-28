@@ -220,9 +220,12 @@ class MecabNer(MecabDataController):
         :return: 추론된 단어 정식 형태로로 분석하여 변환
         """
 
-        mecab_entity_category_list = []
-        for category_entity_item in self.get_category_entity():
-            mecab_entity_category_list.append(self.infer_entity(category_entity_item))
+        if self.infer:
+            mecab_entity_category_list = []
+            for category_entity_item in self.get_category_entity():
+                mecab_entity_category_list.append(self.infer_entity(category_entity_item))
+        else:
+            mecab_entity_category_list = list(self.get_category_entity())
 
         many_entity_index_list = self.fill_entity_in_blank(mecab_entity_category_list)
 
