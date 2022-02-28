@@ -1,10 +1,11 @@
 # mecab_ner
 
 ## Table of Contents
-  * [Installation](#installation)
-  * [Quick start](#quick-start)
-  * [Simple Example](#Simple Example)
-  * [Practical Example](#Practical Example)
+  * Installation
+  * Quick start
+  * Simple Example
+  * Practical Example
+
 ## Installation
 
 Download using pip via pypi.
@@ -17,7 +18,6 @@ $ pip install 'python-mecab-ner' --upgrade
 
 
 ## Simple Example
-
 
 ```python
 from python_mecab_ner.mecab_ner import MecabNer

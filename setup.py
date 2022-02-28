@@ -6,12 +6,12 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name             = 'python-mecab-ner',
-    version          = '1.0.2',
+    version          = '1.0.5',
     description      = 'Test package for distribution',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author           = 'Youngchan',
-    author_email     = 'youngchanchatbot@gmail.com',
+    author_email     = 'gamsunghacker@gmail.com',
     url              = 'https://github.com/YoungchanChang/python-mecab-ner',
     download_url     = '',
     install_requires = ['pybind11 ~= 2.0', "python-mecab-ko ~= 1.0.12"],
