@@ -3,7 +3,7 @@ from typing import List, Generator, Iterable
 from pathlib import Path
 
 from service.mecab_parser import MecabParser
-from service.mecab_storage import MeCabStorage
+from service.mecab_storage import MecabStorage
 from service.mecab_reader import MecabDataController
 from domain.mecab_domain import MecabWordCategory, Category, MecabPatternData, MecabNerFeature, NerFeature
 
@@ -230,7 +230,7 @@ class MecabNer(MecabDataController):
             end_idx = integrated_entity_item[END_IDX] + 1
             start_idx = integrated_entity_item[START_IDX]
             mecab_parsed_token = self.mecab_parsed_list[start_idx:end_idx]
-            restore_tokens = MeCabStorage().reverse_compound_tokens(mecab_parsed_token)
+            restore_tokens = MecabStorage().reverse_compound_tokens(mecab_parsed_token)
             restore_sentence = " ".join(restore_tokens)
             for entity_category_item in mecab_entity_category_list:
                 if entity_category_item.end_idx == end_idx:
