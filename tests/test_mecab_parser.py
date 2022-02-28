@@ -3,6 +3,7 @@ from pathlib import Path
 
 from service.mecab_reader import MecabDataController, DataUtility
 from service.mecab_parser import MecabParser
+from service.mecab_storage import MecabStorage
 
 
 def test_parser_check(parser_check):
@@ -118,15 +119,15 @@ def test_mecab_data_controller(mecab_ner_dir):
 
 def test_mecab_storage(mock_mecab_parser_sentence):
 
-    """ 파싱 후 restore하는 기능 테스트"""
-    z = list(MecabParser(mock_mecab_parser_sentence.get("병원_sentence")).get_word_from_mecab_compound())
+    """
+    토큰화된 단어 원문으로 복구하는 기능
+    """
+    test_mecab_list = list(MecabParser(mock_mecab_parser_sentence.get("병원_sentence")).gen_mecab_compound_token_feature())
 
-    restore_sentence = MecabStorage().restore_mecab_tokens(mecab_parse_results)
+    test_mecab_sentence = " ".join([x[0] for x in test_mecab_list])
+    assert test_mecab_sentence == '나 는 서울 대 병원 에 가 았 어'
 
-    assert len(restore_sentence) == 3
+    test_mecab_feature = [x[1] for x in test_mecab_list]
+    restore_list = MecabStorage().restore_mecab_tokens(test_mecab_feature)
 
-    mecab_parse_results = list(MeCabParser(mock_mecab_parser_sentence.get("compound_count_2")).gen_mecab_compound_token_feature())
-
-    restore_sentence = MeCabStorage().reverse_compound_tokens(mecab_parse_results)
-
-    assert len(restore_sentence) == 3
+    assert restore_list == ['나는', '서울대병원에', '가았어']
