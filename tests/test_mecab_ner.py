@@ -56,3 +56,8 @@ def test_mecab_data_write(mecab_ner_dir):
     m_n = MecabNer()
     for entity_item in m_n.get_category_entity("가봉에 가서 감이 먹고싶네"):
         print(entity_item)
+
+# location데이터 => small 카테고리가 여러개
+# body데이터 => "이"가 들어가있음
+# fastfood 처음부터 #이 들어가 있지 않음
+# song데이터 영어가 들어가 있음

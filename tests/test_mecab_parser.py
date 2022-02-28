@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from mecab_reader import MecabDataReader, MecabDataWriter
-from python_mecab_ner.mecab_parser import MecabParser
+from service.mecab_reader import MecabDataController, MecabDataWriter
+from service.mecab_parser import MecabParser
 
 
 def test_gen_mecab_token_feature(mock_mecab_parser_sentence: dict):
@@ -36,13 +36,13 @@ def test_mecab_data_read(mecab_ner_dir):
 
     FIRST_WORD = 0
 
-    m_g = MecabDataReader(ner_path=str(mecab_ner_dir["python_mecab_ner"]))
+    m_g = MecabDataController(ner_path=str(mecab_ner_dir["python_mecab_ner"]))
 
     for data_item in m_g.gen_all_mecab_category_data(m_g.ner_path, use_mecab_parser=True):
         category, content = data_item
 
         if category.large == category.small:
-            assert (m_g.HEADER + category.small) == list(content.keys())[FIRST_WORD]
+            assert (m_g.SMALL_CAT_DIVIDER + category.small) == list(content.keys())[FIRST_WORD]
 
 
 def test_mecab_data_write(mecab_ner_dir):
@@ -56,8 +56,8 @@ def test_mecab_data_write(mecab_ner_dir):
     m_d_w.write_category()
 
     for path_item in Path(m_d_w.ner_path).iterdir():
-        stroage_data_len = len(MecabDataReader.read_txt(path_item))
+        stroage_data_len = len(MecabDataController.read_txt(path_item))
         mecab_path_read = Path(path_item).parent.parent.joinpath(m_d_w.MECAB_DATA, path_item.name)
-        mecab_data_len = len(MecabDataReader.read_txt(mecab_path_read))
+        mecab_data_len = len(MecabDataController.read_txt(mecab_path_read))
         assert stroage_data_len+1 >= mecab_data_len
 
