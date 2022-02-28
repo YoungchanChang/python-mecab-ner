@@ -3,7 +3,7 @@ from pathlib import Path
 from collections import defaultdict
 
 from domain.mecab_exception import MecabDataReaderException
-from mecab_parser import MecabParser
+from service.mecab_parser import MecabParser
 
 
 class CategoryData:
@@ -81,7 +81,7 @@ class MecabDataController:
         if not Path(ner_path).is_dir():
             raise MecabDataReaderException("Please check if directory is proper")
 
-        self.mecab_path = Path(__file__).parent.joinpath("data", self.MECAB_DATA)
+        self.mecab_path = Path(__file__).parent.parent.joinpath("data", self.MECAB_DATA)
 
         if self._clear_mecab_dir:
             self._clear_dir()
