@@ -139,7 +139,9 @@ class MecabParser:
                 compound_item_list = compound_include_item.expression.split("+")
                 for compound_item in compound_item_list:
                     word, pos_tag, _ = compound_item.split("/")
-                    yield word, compound_include_item
+                    copy_compound_include_item = copy.deepcopy(compound_include_item)
+                    copy_compound_include_item.word = word
+                    yield word, copy_compound_include_item
 
             else:
                 yield compound_include_item.word, compound_include_item
