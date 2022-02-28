@@ -1,6 +1,7 @@
+import pytest
 from pathlib import Path
 
-from service.mecab_reader import MecabDataController
+from service.mecab_reader import MecabDataController, DataUtility
 from service.mecab_parser import MecabParser
 
 
@@ -64,31 +65,65 @@ def test_mecab_data_read(mecab_ner_dir):
     - 첫 카테고리가 그냥 리스트라면 large_category와 small_category데이터가 같아야 한다. 그리고 #는 포함되지 않아야 한다.
     """
 
-
     FIRST_WORD = 0
 
     m_g = MecabDataController(ner_path=str(mecab_ner_dir["python_mecab_ner"]))
 
     for data_item in m_g.gen_all_mecab_category_data(m_g.ner_path, use_mecab_parser=True):
         category, content = data_item
+        # 무조건 small_category는 있어야 한다.
+        assert len(content.keys()) >= 1
 
-        if category.large == category.small:
-            assert (m_g.SMALL_CAT_DIVIDER + category.small) == list(content.keys())[FIRST_WORD]
 
-
-def test_mecab_data_write(mecab_ner_dir):
+def test_mecab_data_controller(mecab_ner_dir):
 
     """
     ner_data를 읽은 뒤, mecab_data로 전환하는 테스트 코드
     - ner_data에서 읽었을 때의 개수와, mecab_data에서 읽었을 때의 개수가 같아야 한다.
     """
 
-    m_d_w = MecabDataWriter(ner_path=str(mecab_ner_dir["python_mecab_ner"]), clear_mecab_dir=True)
+    # 사용자 생성 디렉터리 사용
+    m_d_w = MecabDataController(ner_path="./test_data", clear_mecab_dir=True)
     m_d_w.write_category()
 
     for path_item in Path(m_d_w.ner_path).iterdir():
-        stroage_data_len = len(MecabDataController.read_txt(path_item))
-        mecab_path_read = Path(path_item).parent.parent.joinpath(m_d_w.MECAB_DATA, path_item.name)
-        mecab_data_len = len(MecabDataController.read_txt(mecab_path_read))
-        assert stroage_data_len+1 >= mecab_data_len
+        stroage_data_len = len(DataUtility.read_txt(path_item))
+        mecab_path_read = m_d_w.mecab_path.joinpath(path_item.name)
+        mecab_data_len = len(DataUtility.read_txt(mecab_path_read))
 
+        if path_item.stem == "test_computer":
+            assert stroage_data_len+1 == mecab_data_len
+
+        if path_item.stem == "test_coffee":
+            assert stroage_data_len == mecab_data_len
+
+    # 디렉터리를 삭제하지 않으면 기존 파일 그대로
+    m_d_w = MecabDataController(clear_mecab_dir=False)
+    m_d_w.write_category()
+
+    mecab_data_list = [x.name for x in Path(m_d_w.mecab_path).iterdir()]
+    assert "test_computer.txt" in mecab_data_list
+    assert "test_coffee.txt" in mecab_data_list
+
+    # 디렉터리를 삭제하면 새로운 테스트 생성
+    m_d_w = MecabDataController(clear_mecab_dir=True)
+    m_d_w.write_category()
+
+    mecab_data_list = [x.name for x in Path(m_d_w.mecab_path).iterdir()]
+
+    with pytest.raises(AssertionError):
+        assert "test_computer.txt" in mecab_data_list
+        assert "test_coffee.txt" in mecab_data_list
+
+
+    # m_d_w = MecabDataController(ner_path=str(mecab_ner_dir["python_mecab_ner"]), clear_mecab_dir=True)
+    # m_d_w.write_category()
+    # for path_item in Path(m_d_w.ner_path).iterdir():
+    #     assert "test_computer.txt" != path_item.name
+    #     assert "test_coffee.txt" != path_item.name
+
+    # m_d_w = MecabDataController(ner_path=str(mecab_ner_dir["python_mecab_ner"]), clear_mecab_dir=True)
+    # m_d_w.write_category()
+
+    # m_d_w = MecabDataController(ner_path=str(mecab_ner_dir["python_mecab_ner"]), clear_mecab_dir=True)
+    # m_d_w.write_category()
