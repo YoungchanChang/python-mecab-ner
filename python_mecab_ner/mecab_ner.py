@@ -142,12 +142,12 @@ class MecabNer(MecabDataController):
         """
 
         for mecab_category_item in self.gen_all_mecab_category_data(path=self.mecab_path, use_mecab_parser=False):
-            mecab_parsed_copied = copy.deepcopy(self.mecab_parsed_list)
+
             category, mecab_dictionary_data = mecab_category_item
             if category not in self.search_category:
                 continue
             for small_category in mecab_dictionary_data.keys():
-
+                mecab_parsed_copied = copy.deepcopy(self.mecab_parsed_list)
                 for small_category_item in mecab_dictionary_data.get(small_category):
 
                     original_data, mecab_data = small_category_item.split(",")
@@ -155,6 +155,13 @@ class MecabNer(MecabDataController):
                     category_data = Category(large=category, small=small_category)
                     yield from self._get_pattern(MecabPatternData(category=category_data, dictionary_data=original_data, pattern=mecab_data, sentence=mecab_parsed_copied))
                     yield from self._get_pattern(MecabPatternData(category=category_data, dictionary_data=original_data, pattern=original_data, sentence=mecab_parsed_copied, min_meaning=2, parse_character=True))
+
+
+    def prevent_short_entity(self, m_p_d, pattern_item):
+        pattern_end_pos = m_p_d.sentence[pattern_item[END_IDX] - 1][MECAB_FEATURE].pos
+
+        if pattern_end_pos not in self.ENTITY_POS_LIST and len(m_p_d.pattern) < self.MIN_MEANING:
+            return True
 
     def _get_pattern(self, m_p_d: MecabPatternData) -> Iterable[MecabWordCategory]:
         """
@@ -168,9 +175,7 @@ class MecabNer(MecabDataController):
         if (len(m_p_d.pattern) >= m_p_d.min_meaning) and space_token_contain_pattern:
             for pattern_item in space_token_contain_pattern:
 
-                pattern_end_pos = m_p_d.sentence[pattern_item[END_IDX] - 1][MECAB_FEATURE].pos
-
-                if pattern_end_pos not in self.ENTITY_POS_LIST and len(m_p_d.pattern) < self.MIN_MEANING:
+                if self.prevent_short_entity(m_p_d, pattern_item):
                     continue
 
                 _prevent_compound_token(pattern_item, m_p_d.sentence)
