@@ -294,5 +294,5 @@ class MecabNer(MecabDataController):
         return [x[MECAB_READING_WORD] for x in self.parse(sentence=sentence)]
 
     def ners(self, sentence: str):
-        result = [(x[MECAB_FEATURE].word, x[MECAB_FEATURE].category.large, x[MECAB_FEATURE].category.small) for x in self.parse(sentence=sentence) if x[MECAB_FEATURE].pos == "ner"]
+        result = [(x[MECAB_FEATURE].word, x[MECAB_FEATURE].category.large, x[MECAB_FEATURE].category.small) for x in self.parse(sentence=sentence) if x[MECAB_FEATURE].pos == self.NER_POS]
         return result
