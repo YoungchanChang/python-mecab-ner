@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from domain.mecab_domain import NerFeature, Category
 from mecab_ner import MecabNer, gen_integrated_entity
 from service.mecab_parser import MecabParser
