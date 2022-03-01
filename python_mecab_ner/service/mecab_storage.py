@@ -69,12 +69,12 @@ class MecabStorage:
                 tmp_word = None
                 continue
 
-            if tmp_word == parse_token_item[MECAB_WORD_FEATURE].word and (
+            if tmp_word == parse_token_item[MECAB_WORD_FEATURE].reading and (
                     tmp_idx == parse_token_item[MECAB_WORD_FEATURE].space_token_idx):
                 continue
 
-            self._append(parse_token_item[MECAB_WORD_FEATURE].space_token_idx, parse_token_item[MECAB_WORD_FEATURE].word)
-            tmp_word = parse_token_item[MECAB_WORD_FEATURE].word
+            self._append(parse_token_item[MECAB_WORD_FEATURE].space_token_idx, parse_token_item[MECAB_WORD_FEATURE].reading)
+            tmp_word = parse_token_item[MECAB_WORD_FEATURE].reading
             tmp_idx = parse_token_item[MECAB_WORD_FEATURE].space_token_idx
 
         return self._mecab_reverse()
