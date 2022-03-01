@@ -134,7 +134,9 @@ class MecabNer(MecabDataController):
     def get_category_entity(self) -> Iterable[MecabWordCategory]:
 
         """
-        문장에서 카테고리별로 엔티티 추출
+        문장에서 카테고리별로 엔티티 추출. mecab와 string 2가지 방식으로 진행
+        - mecab은 mecab_data로 검색을 진행
+        - string은 original_data로 검색을 진행
         :param sentence: 엔티티를 찾고자 하는 문장
         :return: 추출 엔티티
         """
