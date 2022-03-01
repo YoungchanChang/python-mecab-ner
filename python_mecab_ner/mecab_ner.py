@@ -110,6 +110,8 @@ class MecabNer(MecabDataController):
     NER_POS = "ner"
     ENTITY_POS_LIST = ["NNG", "NNP", "NNB", "NNBC", "NR", "NP", "XSN", "XR", "SL", "SH", "SN", "UNKNOWN"]
     INFER_ENTITY_POS_LIST = ["NNG", "NNP"]
+    DUPLICATE = False
+    START_IDX = False
 
     def __init__(self, ner_path: str = None, search_category: List = None, infer=True, clear_mecab_dir=True):
 
@@ -155,7 +157,6 @@ class MecabNer(MecabDataController):
                     category_data = Category(large=category, small=small_category)
                     yield from self._get_pattern(MecabPatternData(category=category_data, dictionary_data=original_data, pattern=mecab_data, sentence=mecab_parsed_copied))
                     yield from self._get_pattern(MecabPatternData(category=category_data, dictionary_data=original_data, pattern=original_data, sentence=mecab_parsed_copied, min_meaning=2, parse_character=True))
-
 
     def prevent_short_entity(self, m_p_d, pattern_item):
         pattern_end_pos = m_p_d.sentence[pattern_item[END_IDX] - 1][MECAB_FEATURE].pos
@@ -243,7 +244,12 @@ class MecabNer(MecabDataController):
             restore_tokens = MecabStorage().reverse_compound_tokens(mecab_parsed_token)
             restore_sentence = " ".join(restore_tokens)
             for entity_category_item in mecab_entity_category_list:
-                if entity_category_item.end_idx == end_idx:
+
+                if self.START_IDX and entity_category_item.start_idx == start_idx:
+                    small_category_replace = entity_category_item.category.small.replace(MecabDataController.SMALL_CAT_DIVIDER, "").strip()
+                    yield MecabNerFeature(word=restore_sentence, pos=self.NER_POS, start_idx=start_idx, end_idx=end_idx, category=Category(large=entity_category_item.category.large, small=small_category_replace))
+
+                elif (self.START_IDX == False) and entity_category_item.end_idx == end_idx:
                     small_category_replace = entity_category_item.category.small.replace(MecabDataController.SMALL_CAT_DIVIDER, "").strip()
                     yield MecabNerFeature(word=restore_sentence,
                                         pos=self.NER_POS,
@@ -251,10 +257,10 @@ class MecabNer(MecabDataController):
                                         end_idx=end_idx,
                                         category=Category(large=entity_category_item.category.large, small=small_category_replace))
 
-
     def parse(self, sentence: str):
         """
         문장 분해 후 값 돌려주는 기능
+        - end_idx는 항상 1크다.
         :param sentence: 입력 문장
         :return: 파싱돈 결과
         """
@@ -269,12 +275,13 @@ class MecabNer(MecabDataController):
         for idx, mecab_parse_item in enumerate(self.mecab_parsed_list):
 
             for mecab_item in mecab_cat_list:
-                if idx == mecab_item.end_idx:
+                if idx+1 == mecab_item.end_idx:
                     parse_result.append((mecab_item.word,
                                          NerFeature(word=mecab_item.word,
                                                     pos=mecab_item.pos,
                                                     category=mecab_item.category)))
-                    break
+                    if not self.DUPLICATE:
+                        break
             if idx in cat_idx_list:
                 continue
 
