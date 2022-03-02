@@ -29,7 +29,7 @@ mecab_ner.parse(test_sentence)
 # [('아이유', NerFeature(word='아이유', pos='ner', category=Category(large='ner_example_music_singer', small='가수'))), ('의', NerFeature(word='의', pos='JKG', category=None)), ('금요일에 만나요', NerFeature(word='금요일에 만나요', pos='ner', category=Category(large='ner_example_music_song', small='노래'))), ('를', NerFeature(word='를', pos='JKO', category=None)), ('듣', NerFeature(word='듣', pos='VV+EC', category=None)), ('으면서', NerFeature(word='으면서', pos='VV+EC', category=None)), ('신촌 딸기', NerFeature(word='신촌 딸기', pos='ner', category=Category(large='ner_example_fruit', small='과일'))), ('를', NerFeature(word='를', pos='JKO', category=None)), ('먹', NerFeature(word='먹', pos='VV', category=None)), ('을래', NerFeature(word='을래', pos='EC', category=None))]
 
 mecab_ner.morphs(test_sentence)
-['아이유', '의', '금요일에 만나요', '를', '듣', '으면서', '신촌 딸기', '를', '먹', '을래']
+# ['아이유', '의', '금요일에 만나요', '를', '듣', '으면서', '신촌 딸기', '를', '먹', '을래']
 
 mecab_ner.ners(test_sentence)
 # [('아이유', 'ner_example_music_singer', '가수'), ('금요일에 만나요', 'ner_example_music_song', '노래'), ('신촌 딸기', 'ner_example_fruit', '과일')]
