@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name             = 'python-mecab-ner',
-    version          = '1.0.5',
+    version          = '1.0.6',
     description      = 'Test package for distribution',
     long_description=long_description,
     long_description_content_type='text/markdown',
