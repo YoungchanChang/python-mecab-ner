@@ -1,10 +1,16 @@
 # mecab_ner
 
 ## Table of Contents
+  * Features
   * Installation
   * Quick start
   * Simple Example
   * Practical Example
+
+
+## Features
+  * Python library to get NER using Mecab
+  * Infer NER from Data dictionary
 
 ## Installation
 
@@ -41,6 +47,7 @@ mecab_ner.ners(test_sentence)
 - Set `data path` for your work
 - `File name` will become entity set `category large`
 
+### Data Directory
 
 ```
 # Directory
@@ -48,13 +55,16 @@ root/
     word_dir.py
     data/
         programming.txt
+        public.txt
 ```
+
+### Data File
 
 - Data file must be `txt` format and first line should start your small category
 - `First line` will become entity set `category small`
 
 ```
-# programming.txt
+- data/programming.txt
 #인공지능
 파이썬
 딥러닝
@@ -64,13 +74,20 @@ root/
 #백엔드
 로그
 http통신
+
+- data/place.txt
+#hospital
+병원
 ```
 
-- ner : `('자연어 로그', 'programming', '백엔드')` is infered ner.
+### Results
+
+- on example code 1 `('자연어 로그', 'programming', '백엔드')` is infered ner from vocab `로그` in data file.
+- on example code 2 `('서울대병원', 'place', 'hospital')` is infered ner from vocab `병원` in data file.
 - if you don't want, set `MecabNer(infer=False)`  
 
 ```python
-# example code
+# example code 1
 from python_mecab_ner.mecab_ner import MecabNer
 
 mecab_ner = MecabNer(ner_path="./data")
@@ -82,10 +99,18 @@ mecab_ner.parse(test_sentence)
 mecab_ner.morphs(test_sentence)
 # ['자연어 처리', '를', '위하', '아', '인공', '지능', '을', '위하', 'ᆫ', '파이썬', '을', '공부', '하', '여', '자연', '어', '와', '관련', '되', 'ᆫ', '일', '을', '하', '고', '있', '습니다', '.', 'http', '요청', '시', '자연어 로그', '를', '쌓', '는', '것', '이', '중요', '하', 'ᄇ니다', '.']
 
-
 mecab_ner.ners(test_sentence)
 # [('자연어 처리', 'programming', '인공지능'), ('파이썬', 'programming', '인공지능'), ('자연어 로그', 'programming', '백엔드')]
+
+test_sentence2 = "나는 서울대병원에 갈려고 합니다."
+
+mecab_ner.parse(test_sentence2)
+# [('나', NerFeature(word='나', pos='NP', category=None)), ('는', NerFeature(word='는', pos='JX', category=None)), ('서울대병원', NerFeature(word='서울대병원', pos='ner', category=Category(large='place', small='hospital'))), ('에', NerFeature(word='에', pos='JKB', category=None)), ('가', NerFeature(word='가', pos='VV+EC', category=None)), ('ᆯ려고', NerFeature(word='ᆯ려고', pos='VV+EC', category=None)), ('하', NerFeature(word='하', pos='VX+EF', category=None)), ('ᄇ니다', NerFeature(word='ᄇ니다', pos='VX+EF', category=None)), ('.', NerFeature(word='.', pos='SF', category=None))]
+
+mecab_ner.morphs(test_sentence2)
+# ['나', '는', '서울대병원', '에', '가', 'ᆯ려고', '하', 'ᄇ니다', '.']
+
+mecab_ner.ners(test_sentence2)
+# [('서울대병원', 'place', 'hospital')]
 ```
 
-## Features
-  * Python library to get NER using Mecab
