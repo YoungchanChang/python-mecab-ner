@@ -47,14 +47,14 @@ mecab_ner.ners(test_sentence)
 root/
     word_dir.py
     data/
-        test_data.txt
+        programming.txt
 ```
 
 - Data file must be `txt` format and first line should start your small category
 - `First line` will become entity set `category small`
 
 ```
-# test_data.txt
+# programming.txt
 #인공지능
 파이썬
 딥러닝
