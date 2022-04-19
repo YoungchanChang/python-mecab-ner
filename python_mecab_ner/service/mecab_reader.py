@@ -68,6 +68,7 @@ class MecabDataController:
         self.ner_path = ner_path or "./"
         self._clear_mecab_dir = clear_mecab_dir
         self._set_mecab_path(self.ner_path)
+        self.mecab_parser = MecabParser()
 
     def _set_mecab_path(self, ner_path: str) -> None:
 
@@ -107,8 +108,7 @@ class MecabDataController:
         except FileNotFoundError:
             pass
 
-    @classmethod
-    def read_category(cls, datas: List) -> Generator:
+    def read_category(self, datas: List) -> Generator:
 
         """
         데이터에서 헤더, 내용을 나눠서 반환하는 메소드
@@ -119,7 +119,7 @@ class MecabDataController:
         small_cat_words = []
 
         for word in words:
-            if cls.SMALL_CAT_DIVIDER in word:
+            if self.SMALL_CAT_DIVIDER in word:
                 yield small_cat, sorted(small_cat_words, key=len, reverse=True)
                 small_cat = word
                 small_cat_words = []
@@ -132,8 +132,7 @@ class MecabDataController:
 
         yield small_cat, sorted(small_cat_words, key=len, reverse=True)
 
-    @classmethod
-    def gen_all_mecab_category_data(cls, path, use_mecab_parser=False) -> Generator:
+    def gen_all_mecab_category_data(self, path, use_mecab_parser=False) -> Generator:
 
         """
         경로에 있는 데이터 읽은 뒤 카테고리 데이터셋으로 반환
@@ -143,22 +142,22 @@ class MecabDataController:
         """
 
         for path_item in Path(path).iterdir():
-            if Path(path_item).suffix != cls.FORMAT_SUFFIX:
+            if Path(path_item).suffix != self.FORMAT_SUFFIX:
                 continue
 
             txt_data = DataUtility.read_txt(path_item)
             large_category = path_item.stem
             c_d = CategoryData()
 
-            if not txt_data[cls.FIRST_WORD].startswith(cls.SMALL_CAT_DIVIDER):
-                txt_data.insert(cls.FIRST_WORD, cls.SMALL_CAT_DIVIDER + path_item.stem)
+            if not txt_data[self.FIRST_WORD].startswith(self.SMALL_CAT_DIVIDER):
+                txt_data.insert(self.FIRST_WORD, self.SMALL_CAT_DIVIDER + path_item.stem)
 
-            for small_cat_word in cls.read_category(txt_data):
+            for small_cat_word in self.read_category(txt_data):
 
                 small_cat, words = small_cat_word
 
                 if use_mecab_parser:
-                    words = [(word, MecabParser(sentence=word).get_word_from_mecab_compound()) for word in words]
+                    words = [(word, self.mecab_parser.get_word_from_mecab_compound(sentence=word)) for word in words]
 
                 c_d.add(small_cat, words)
 
