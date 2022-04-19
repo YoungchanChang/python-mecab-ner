@@ -44,9 +44,12 @@ class MecabStorage:
         :param parsed_tokens: 파싱된 토큰들
         :return: 파싱된 토큰 합친 토큰
         """
-
+        space_mecab_list = []
         for parse_token_item in parsed_tokens:
-            self._append(parse_token_item.space_token_idx, parse_token_item.word)
+            space_mecab_token = (parse_token_item.space_token_idx, parse_token_item.mecab_token_idx)
+            if space_mecab_token not in space_mecab_list:
+                space_mecab_list.append(space_mecab_token)
+                self._append(parse_token_item.space_token_idx, parse_token_item.reading)
         return self._mecab_reverse()
 
     def reverse_compound_tokens(self, parse_compound_tokens):
