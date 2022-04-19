@@ -141,6 +141,7 @@ class MecabParser:
                     word, pos_tag, _ = compound_item.split("/")
                     copy_compound_include_item = copy.deepcopy(compound_include_item)
                     copy_compound_include_item.word = word
+                    copy_compound_include_item.pos = pos_tag
                     yield word, copy_compound_include_item
 
             else:
