@@ -83,7 +83,7 @@ class MecabParser:
 
         self.tagger = _mecab.Tagger(argument)
 
-    def _get_space_token_idx(self, sentence: str, mecab_word_feature: MecabWordFeature) -> int:
+    def _get_space_token_idx(self, sentence_token: list, mecab_word_feature: MecabWordFeature) -> int:
 
         """
         스페이스로 토큰 분석한 인덱스 값 반환
@@ -91,7 +91,6 @@ class MecabParser:
         :return: 스페이스 토큰 분석한 결과
         """
 
-        sentence_token = sentence.split()
         for idx_token, sentence_token_item in enumerate(sentence_token):
 
             index_string = sentence_token_item.find(mecab_word_feature.word)
@@ -111,7 +110,7 @@ class MecabParser:
         """
 
         lattice = _create_lattice(sentence)
-
+        sentence_split = sentence.split()
         if not self.tagger.parse(lattice):
             raise MeCabError(self.tagger.what())
 
@@ -119,7 +118,7 @@ class MecabParser:
             mecab_token_feature = _get_mecab_feature(mecab_token)
             mecab_token_feature.mecab_token_idx = mecab_token_idx
 
-            space_token_idx = self._get_space_token_idx(sentence, mecab_token_feature)
+            space_token_idx = self._get_space_token_idx(sentence_split, mecab_token_feature)
 
             if space_token_idx is not False:
                 mecab_token_feature.space_token_idx = space_token_idx
