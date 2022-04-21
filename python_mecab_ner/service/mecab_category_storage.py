@@ -37,9 +37,11 @@ class CategoryLoadStorage:
 def set_cat_dict(ner_text, category_dictionary, entity=True):
     DUPLICATE_DISTANCE = 2
     mecab_parser = MecabParser()
-    ner_target_list = re.findall(r"<([\d\w|가-힣|\s|%]+):([\d\w]+)>", ner_text)
 
-    plain_text = re.sub(r"<([\d\w|가-힣|\s|%]+):([\d\w]+)>", r"\g<1>", ner_text)
+    regex_expression = r"<([^:]+):([\d\w]+)>"
+    ner_target_list = re.findall(regex_expression, ner_text)
+
+    plain_text = re.sub(regex_expression, r"\g<1>", ner_text)
 
     nert_item_idx = get_ner_item_idx(ner_text, ner_target_list)
 
@@ -123,7 +125,7 @@ class NerExtractor:
         return ("*", "CK")
 
     def get_token_value(self, mecab_parse_token, pos_seq_range):
-        token_found = mecab_parse_token[pos_seq_range[0]: pos_seq_range[1]]
+        token_found = mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]
         restored_tokens = self.mecab_storage.reverse_compound_tokens(token_found)
         token_idx = int(sum([x[1].mecab_token_compound_idx for x in token_found]) / len(token_found))
         return token_found, restored_tokens, token_idx
