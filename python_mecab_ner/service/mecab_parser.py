@@ -122,7 +122,7 @@ class MecabParser:
 
             if space_token_idx is not False:
                 mecab_token_feature.space_token_idx = space_token_idx
-                mecab_token_feature.word = mecab_token_feature.word.lower()
+                mecab_token_feature.word = mecab_token_feature.word
 
                 yield mecab_token_feature
 
