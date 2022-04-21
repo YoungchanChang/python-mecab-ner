@@ -51,3 +51,23 @@ def set_cat_dict(ner_text, category_dictionary, entity=True):
             category_dictionary[ner_found_item[1]].pos_dict[pos_seq].add(token_core_val)
             category_dictionary[ner_found_item[1]].word_dict.add(ner_token_val[-1])
             category_dictionary[ner_found_item[1]].counter_dict += Counter(ner_token_val)
+
+
+def get_load_storage(data_entity):
+    data_load_storage = defaultdict(CategoryLoadStorage)
+    data_category_allowance = defaultdict(list)
+    for i in data_entity.items():
+        cat, category_save = i
+        tmp_pos_dict = {}
+        for k in sorted(dict(category_save.pos_dict), key=len, reverse=True):
+            tmp_pos_dict[k] = dict(category_save.pos_dict[k])
+            data_category_allowance[k].append(cat)
+        data_load_storage[cat].pos_dict = tmp_pos_dict
+        data_load_storage[cat].word_dict = list(category_save.word_dict)
+        data_load_storage[cat].counter_dict = category_save.counter_dict
+
+    entity_allowed_category = {}
+    for k in sorted(dict(data_category_allowance), key=len, reverse=True):
+        entity_allowed_category[k] = data_category_allowance[k]
+
+    return data_load_storage, data_category_allowance
