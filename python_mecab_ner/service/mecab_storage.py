@@ -76,7 +76,12 @@ class MecabStorage:
                     tmp_idx == parse_token_item[MECAB_WORD_FEATURE].space_token_idx):
                 continue
 
-            self._append(data, parse_token_item[MECAB_WORD_FEATURE].space_token_idx, parse_token_item[MECAB_WORD_FEATURE].reading)
+            if parse_token_item[MECAB_WORD_FEATURE].type == "Inflect":
+                reading_value = parse_token_item[MECAB_WORD_FEATURE].reading
+            else:
+                reading_value = parse_token_item[MECAB_WORD_FEATURE].word
+
+            self._append(data, parse_token_item[MECAB_WORD_FEATURE].space_token_idx, reading_value)
             tmp_word = parse_token_item[MECAB_WORD_FEATURE].reading
             tmp_idx = parse_token_item[MECAB_WORD_FEATURE].space_token_idx
 
