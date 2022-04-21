@@ -16,6 +16,7 @@ class CategorySaveStorage:
         self.pos_dict = defaultdict(set) # 포맷과 마지막 값을 확인
         self.word_dict = set() # 마지막 값을 확인
         self.counter_dict = Counter() # 검색용 점수 스코어 단어
+        self.counter_near_dict = Counter()  # 검색용 점수 스코어 단어
 
 
 class CategoryLoadStorage:
@@ -23,9 +24,10 @@ class CategoryLoadStorage:
         self.pos_dict = defaultdict(dict) # 포맷과 마지막 값을 확인
         self.word_dict = list() # 마지막 값을 확인
         self.counter_dict = Counter() # 검색용 점수 스코어 단어
-
+        self.counter_near_dict = Counter()  # 검색용 점수 스코어 단어
 
 def set_cat_dict(ner_text, category_dictionary, entity=True):
+    DUPLICATE_DISTANCE = 5
     mecab_parser = MecabParser()
     ner_target_list = re.findall(r"<([\d\w|가-힣|\s|%]+):([\d\w]+)>", ner_text)
 
@@ -56,6 +58,10 @@ def set_cat_dict(ner_text, category_dictionary, entity=True):
             category_dictionary[ner_found_item[1]].word_dict.add(ner_token_val[-1])
             category_dictionary[ner_found_item[1]].counter_dict += Counter(ner_token_val)
 
+            counter_near_list = []
+            for i in range(max(0, ner_found_item[2][0] - DUPLICATE_DISTANCE), min(len(plain_mecab_result), ner_found_item[2][0] + DUPLICATE_DISTANCE), 1):
+                counter_near_list.append((plain_mecab_result[i][1].word, plain_mecab_result[i][1].pos))
+            category_dictionary[ner_found_item[1]].counter_near_dict += Counter(counter_near_list)
 
 def get_load_storage(data_entity):
     data_load_storage = defaultdict(CategoryLoadStorage)
@@ -69,6 +75,7 @@ def get_load_storage(data_entity):
         data_load_storage[cat].pos_dict = tmp_pos_dict
         data_load_storage[cat].word_dict = list(category_save.word_dict)
         data_load_storage[cat].counter_dict = category_save.counter_dict
+        data_load_storage[cat].counter_near_dict = category_save.counter_near_dict
 
     entity_allowed_category = {}
     for k in sorted(dict(data_category_allowance), key=len, reverse=True):
@@ -274,8 +281,9 @@ def delete_duplicate(mecab_parse_token, data_list, data_load_storage):
                 score = 0
                 for i in range(mecab_token_idx-DUPLICATE_DISTANCE, mecab_token_idx+DUPLICATE_DISTANCE, 1):
                     mecab_found_idx = mecab_parse_token[i]
-                    if mecab_found_idx[1].pos in duplicate_pos:
-                        score += data_load_storage[duplicate_item[0]].counter_dict.get((mecab_found_idx[1].word, mecab_found_idx[1].pos), 0)
+                    score += data_load_storage[duplicate_item[0]].counter_dict.get((mecab_found_idx[1].word, mecab_found_idx[1].pos), 0)
+                    score += data_load_storage[duplicate_item[0]].counter_near_dict.get(
+                        (mecab_found_idx[1].word, mecab_found_idx[1].pos), 0)
                 if score > max_score:
                     max_score = score
                     max_value = duplicate_item
