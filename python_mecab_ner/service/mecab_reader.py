@@ -3,7 +3,7 @@ from pathlib import Path
 from collections import defaultdict
 
 from python_mecab_ner.domain.mecab_exception import MecabDataReaderException
-from python_mecab_ner.service.mecab_parser import MecabParser
+from python_mecab_ner.service.mecab_parser import MecabParser, delete_pattern_from_string
 
 
 class CategoryData:
@@ -16,6 +16,61 @@ class CategoryData:
     def add(self, small_cat, word):
         self.large_cat[small_cat].extend(word)
 
+
+def get_ner_item_idx(ner_text: str, ner_target_list: list) -> list:
+    nert_item_idx = []
+
+    ner_text_copy = ner_text
+    for ner_tuple_item in ner_target_list:
+        word_token_start = 0
+        ner_target_item = f"<{ner_tuple_item[0]}:{(ner_tuple_item[1])}>"
+        ner_target_start = ner_text_copy.find(ner_target_item)
+        ner_text_copy = delete_pattern_from_string(ner_text_copy, ner_target_item, ner_target_start)  # <북미:OG>
+        nert_target_end = ner_target_start + len(ner_target_item)
+        range_idx = []
+        for idx, a_item in enumerate(ner_text.split()):
+            word_token_end = word_token_start + len(a_item)
+            if ner_target_start >= word_token_start and ner_target_start <= word_token_end:
+                range_idx.append(idx)
+            elif nert_target_end >= word_token_start and nert_target_end <= word_token_end:
+                range_idx.append(idx)
+            elif word_token_start >= ner_target_start and word_token_end <= nert_target_end:
+                range_idx.append(idx)
+            word_token_start = word_token_end + 1
+
+        nert_item_idx.append([ner_tuple_item[0], ner_tuple_item[1], range_idx])
+    return nert_item_idx
+
+
+def get_ner_found_list(nert_item_idx: list, plain_mecab_result: list):
+    ner_found_list = []
+    for ner_item in nert_item_idx:
+        tmp_ner_list = []
+
+        str_item = ner_item[0]
+        save_last_token = "*"
+        for plain_mecab_item in plain_mecab_result:
+
+            if str_item.replace("*", "").replace(" ", "") == "":
+                break
+
+            if plain_mecab_item[1].type == "Inflect":
+                reading_value = plain_mecab_item[1].reading
+            else:
+                reading_value = plain_mecab_item[1].word
+
+            reading_idx = str_item.find(reading_value)
+            # 토큰 인덱스 범위 안에 들어가고, 문자열을 찾을 때
+            if (plain_mecab_item[1].space_token_idx in ner_item[2]) and (reading_idx != -1):
+                str_item = delete_pattern_from_string(str_item, reading_value, reading_idx)
+                tmp_ner_list.append((reading_value, plain_mecab_item[1].pos))
+                save_last_token = reading_value
+
+        # 마지막 단어값이 토큰의 마지막 단어와 일치할 때 수행
+        if ner_item[0][-1] == save_last_token[-1]:
+            ner_item.append(tmp_ner_list)
+            ner_found_list.append(ner_item)
+    return ner_found_list
 
 class DataUtility:
 
