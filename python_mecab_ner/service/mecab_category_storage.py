@@ -181,6 +181,11 @@ class NerExtractor:
                                     self.validate_value(pos_category_item, mecab_parse_token, data_load_storage,
                                                         pos_seq_range, strict=False)
                                 token_found, restored_tokens, token_idx = self.get_token_value(mecab_parse_token, pos_seq_range)
+
+                                if len(token_found) == 1 and token_found[0][1].type == "Compound":
+                                    # 한 단어인데 복합어에 속해있는 경우 스킵
+                                    continue
+
                                 data_list.append((pos_category_item, pos_seq_key, token_idx, copy.deepcopy(token_core_val), copy.deepcopy(token_found), restored_tokens, key))
                             except ValueError as ve:
                                 ...
