@@ -12,10 +12,9 @@ class MecabStorage:
     메캅 형태소 분석 결과를 원래 문장으로 복원
     """
 
-    def __init__(self):
-        self.data = defaultdict(list)
 
-    def _append(self, index, token):
+
+    def _append(self, data, index, token):
 
         """
         인덱스
@@ -23,9 +22,9 @@ class MecabStorage:
         :param token: 단어
         """
 
-        self.data[index].append(token)
+        data[index].append(token)
 
-    def _mecab_reverse(self):
+    def _mecab_reverse(self, data):
 
         """
         메캅 결과에서 반환
@@ -33,11 +32,11 @@ class MecabStorage:
         """
 
         reverse_sentence = list()
-        for key in sorted(self.data):
-            reverse_sentence.append("".join(self.data[key]))
+        for key in sorted(data):
+            reverse_sentence.append("".join(data[key]))
         return reverse_sentence
 
-    def restore_mecab_tokens(self, parsed_tokens):
+    def restore_mecab_tokens(self, data, parsed_tokens):
 
         """
         복합어로 분해되지 않은 토큰들을 원래 문장으로 복원
@@ -49,8 +48,8 @@ class MecabStorage:
             space_mecab_token = (parse_token_item.space_token_idx, parse_token_item.mecab_token_idx)
             if space_mecab_token not in space_mecab_list:
                 space_mecab_list.append(space_mecab_token)
-                self._append(parse_token_item.space_token_idx, parse_token_item.reading)
-        return self._mecab_reverse()
+                self._append(data, parse_token_item.space_token_idx, parse_token_item.reading)
+        return self._mecab_reverse(data)
 
     def reverse_compound_tokens(self, parse_compound_tokens):
 
@@ -62,13 +61,14 @@ class MecabStorage:
         :return: 복원된 문장
         """
 
+        data = defaultdict(list)
         tmp_word = None
         tmp_idx = None
 
         for parse_token_item in parse_compound_tokens:
 
             if parse_token_item[MECAB_WORD_FEATURE].type is None:
-                self._append(parse_token_item[MECAB_WORD_FEATURE].space_token_idx, parse_token_item[MECAB_WORD_FEATURE].word)
+                self._append(data, parse_token_item[MECAB_WORD_FEATURE].space_token_idx, parse_token_item[MECAB_WORD_FEATURE].word)
                 tmp_word = None
                 continue
 
@@ -76,8 +76,8 @@ class MecabStorage:
                     tmp_idx == parse_token_item[MECAB_WORD_FEATURE].space_token_idx):
                 continue
 
-            self._append(parse_token_item[MECAB_WORD_FEATURE].space_token_idx, parse_token_item[MECAB_WORD_FEATURE].reading)
+            self._append(data, parse_token_item[MECAB_WORD_FEATURE].space_token_idx, parse_token_item[MECAB_WORD_FEATURE].reading)
             tmp_word = parse_token_item[MECAB_WORD_FEATURE].reading
             tmp_idx = parse_token_item[MECAB_WORD_FEATURE].space_token_idx
 
-        return self._mecab_reverse()
+        return self._mecab_reverse(data)
