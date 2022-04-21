@@ -11,6 +11,13 @@ entity_last_pos = ["NNG","NNP","NNB","NNBC","NR","NP","VV","VA","MM","MAG","IC",
 intent_last_pos = ["VV", "VA", "XSV", "XSA", "IC", "EP", "EF", "EC",]
 duplicate_pos = ["NNG","NNP", "VV", "VA"]
 
+
+STRICT_CORE = 0
+LOOSE_CORE = 1
+PART_INFER = 2
+BRUTE_INFER = 3
+
+
 class CategorySaveStorage:
     def __init__(self):
         self.pos_dict = defaultdict(set) # 포맷과 마지막 값을 확인
@@ -26,8 +33,9 @@ class CategoryLoadStorage:
         self.counter_dict = Counter() # 검색용 점수 스코어 단어
         self.counter_near_dict = Counter()  # 검색용 점수 스코어 단어
 
+
 def set_cat_dict(ner_text, category_dictionary, entity=True):
-    DUPLICATE_DISTANCE = 5
+    DUPLICATE_DISTANCE = 2
     mecab_parser = MecabParser()
     ner_target_list = re.findall(r"<([\d\w|가-힣|\s|%]+):([\d\w]+)>", ner_text)
 
@@ -60,7 +68,9 @@ def set_cat_dict(ner_text, category_dictionary, entity=True):
 
             counter_near_list = []
             for i in range(max(0, ner_found_item[2][0] - DUPLICATE_DISTANCE), min(len(plain_mecab_result), ner_found_item[2][0] + DUPLICATE_DISTANCE), 1):
-                counter_near_list.append((plain_mecab_result[i][1].word, plain_mecab_result[i][1].pos))
+                for plan_mecab_item in plain_mecab_result:
+                    if plan_mecab_item[1].space_token_idx == i:
+                        counter_near_list.append((plan_mecab_item[1].word, plan_mecab_item[1].pos))
             category_dictionary[ner_found_item[1]].counter_near_dict += Counter(counter_near_list)
 
 def get_load_storage(data_entity):
@@ -81,7 +91,7 @@ def get_load_storage(data_entity):
     for k in sorted(dict(data_category_allowance), key=len, reverse=True):
         entity_allowed_category[k] = data_category_allowance[k]
 
-    return data_load_storage, data_category_allowance
+    return data_load_storage, entity_allowed_category
 
 
 def contains(small, big):
@@ -119,13 +129,20 @@ class NerExtractor:
         return token_found, restored_tokens, token_idx
 
 
-    def validate_strict_value(self, pos_category_item, mecab_parse_token, data_load_storage, pos_seq_range):
+    def validate_value(self, pos_category_item, mecab_parse_token, data_load_storage, pos_seq_range, strict=True):
         for token_found_item in mecab_parse_token[pos_seq_range[0]: pos_seq_range[1]]:
-            if token_found_item[1].pos in self.meaning:
-                dict_found = data_load_storage[pos_category_item].counter_dict.get(
-                    (token_found_item[1].word, token_found_item[1].pos), None)
-                if dict_found is None:
-                    raise ValueError("Not proper")
+            if strict:
+                if token_found_item[1].pos in self.meaning:
+                    dict_found = data_load_storage[pos_category_item].counter_dict.get(
+                        (token_found_item[1].word, token_found_item[1].pos), None)
+                    if dict_found is None:
+                        raise ValueError("Not proper")
+            else:
+                if token_found_item[1].pos in entity_last_pos:
+                    dict_found = data_load_storage[pos_category_item].counter_near_dict.get(
+                        (token_found_item[1].word, token_found_item[1].pos), None)
+                    if dict_found is None:
+                        raise ValueError("Not proper")
 
     def get_entity(self, mecab_parse_token, data_load_storage, data_category_allowance, not_found_deque, entity=True, strict=False):
         """
@@ -156,8 +173,11 @@ class NerExtractor:
 
                             try:
                                 if strict:
-                                    self.validate_strict_value(pos_category_item, mecab_parse_token, data_load_storage,
-                                                          pos_seq_range)
+                                    self.validate_value(pos_category_item, mecab_parse_token, data_load_storage,
+                                                        pos_seq_range)
+                                else:
+                                    self.validate_value(pos_category_item, mecab_parse_token, data_load_storage,
+                                                        pos_seq_range, strict=False)
                                 token_found, restored_tokens, token_idx = self.get_token_value(mecab_parse_token, pos_seq_range)
                                 data_list.append((pos_category_item, pos_seq_key, token_idx, copy.deepcopy(token_core_val), copy.deepcopy(token_found), restored_tokens, key))
                             except ValueError as ve:
@@ -177,9 +197,9 @@ class NerExtractor:
         infer_list = []
 
         if brute:
-            key = "brute"
+            key = "brute_infer"
         else:
-            key = "part"
+            key = "part_infer"
 
         # 형태소는 맞지만 마지막 단어가 매칭되지 않은 경우 찾기
         value = True
@@ -279,7 +299,7 @@ def delete_duplicate(mecab_parse_token, data_list, data_load_storage):
             for duplicate_item in duplicate_value:
                 mecab_token_idx = duplicate_item[3][1].mecab_token_compound_idx
                 score = 0
-                for i in range(mecab_token_idx-DUPLICATE_DISTANCE, mecab_token_idx+DUPLICATE_DISTANCE, 1):
+                for i in range(max(0,mecab_token_idx-DUPLICATE_DISTANCE), min(len(mecab_parse_token), mecab_token_idx+DUPLICATE_DISTANCE), 1):
                     mecab_found_idx = mecab_parse_token[i]
                     score += data_load_storage[duplicate_item[0]].counter_dict.get((mecab_found_idx[1].word, mecab_found_idx[1].pos), 0)
                     score += data_load_storage[duplicate_item[0]].counter_near_dict.get(
@@ -291,3 +311,55 @@ def delete_duplicate(mecab_parse_token, data_list, data_load_storage):
             for duplicate_item in duplicate_value:
                 if duplicate_item != max_value:
                     data_list.remove(duplicate_item)
+
+def get_category_entity_list(sentence, entity_load_storage, entity_category_allowance, intent_load_storage, intent_category_allowance, level, entity_only=True):
+    mecab_parser = MecabParser()
+    mecab_storage = MecabStorage()
+
+    mecab_parse_token = list(mecab_parser.gen_mecab_compound_token_feature(sentence))
+
+    ner_extractor = NerExtractor()
+
+    not_found_entity_deque = []
+    not_found_intent_deque = []
+    entity_list = ner_extractor.get_entity(mecab_parse_token, entity_load_storage, entity_category_allowance, not_found_entity_deque, entity=True, strict=True)
+
+    if level >= LOOSE_CORE:
+        entity_not_strict_list = ner_extractor.get_entity(mecab_parse_token, entity_load_storage, entity_category_allowance,
+                                               not_found_entity_deque, entity=True, strict=False)
+        entity_list.extend(entity_not_strict_list)
+
+    if entity_only is False:
+        intent_list = ner_extractor.get_entity(mecab_parse_token, intent_load_storage, intent_category_allowance, not_found_intent_deque, entity=False)
+
+    if level >= PART_INFER:
+
+        not_found_entity_deque = deque(sorted(not_found_entity_deque, key=lambda x: len(x[0]), reverse=True))
+        inference_deque = ner_extractor.set_infer_ner(mecab_parse_token, entity_list, entity_load_storage, not_found_entity_deque)
+
+        if level >= BRUTE_INFER:
+            brute_inference_deque = ner_extractor.set_infer_ner(mecab_parse_token, entity_list, entity_load_storage,
+                                                          inference_deque, brute=True)
+
+    if entity_only:
+        delete_duplicate(mecab_parse_token, entity_list, entity_load_storage)
+
+
+    if entity_only is False:
+        mecab_parse_token = list(mecab_parser.gen_mecab_compound_token_feature(sentence))
+
+        matched_list = get_matched(entity_list, intent_list)
+        matched_list = sorted(matched_list, key=lambda x : x[2], reverse=True)
+        last_val = len(mecab_parse_token)
+        for matched_item in matched_list:
+            entity_list.remove(matched_item[0])
+            intent_list.remove(matched_item[1])
+            token_found = mecab_parse_token[matched_item[2]: last_val]
+            restored_tokens = mecab_storage.reverse_compound_tokens(token_found)
+            last_val = matched_item[2]
+            print(restored_tokens, matched_item[0][6])
+
+    if entity_only:
+        return entity_list
+    else:
+        return matched_list
