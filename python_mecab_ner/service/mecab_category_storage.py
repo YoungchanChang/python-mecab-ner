@@ -284,8 +284,6 @@ def get_matched(entity_list: list, intent_list: list):
     return matched
 
 
-
-
 def delete_duplicate(mecab_parse_token, data_list, data_load_storage):
 
     DUPLICATE_DISTANCE = 5
@@ -307,7 +305,13 @@ def delete_duplicate(mecab_parse_token, data_list, data_load_storage):
                 mecab_token_idx = duplicate_item[3][1].mecab_token_compound_idx
                 score = 0
                 for i in range(max(0,mecab_token_idx-DUPLICATE_DISTANCE), min(len(mecab_parse_token), mecab_token_idx+DUPLICATE_DISTANCE), 1):
+                    if i == mecab_token_idx:
+                        continue
                     mecab_found_idx = mecab_parse_token[i]
+
+                    if mecab_found_idx[1].pos not in duplicate_pos:
+                        continue
+
                     score += data_load_storage[duplicate_item[0]].counter_dict.get((mecab_found_idx[1].word, mecab_found_idx[1].pos), 0)
                     score += data_load_storage[duplicate_item[0]].counter_near_dict.get(
                         (mecab_found_idx[1].word, mecab_found_idx[1].pos), 0)
@@ -349,7 +353,8 @@ def get_category_entity_list(sentence, entity_load_storage, entity_category_allo
                                                           inference_deque, brute=True)
 
     if entity_only:
-        delete_duplicate(mecab_parse_token, entity_list, entity_load_storage)
+        duplicate_find_tokens= list(mecab_parser.gen_mecab_compound_token_feature(sentence))
+        delete_duplicate(duplicate_find_tokens, entity_list, entity_load_storage)
 
 
     if entity_only is False:
