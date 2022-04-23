@@ -42,7 +42,7 @@ class MecabWordFeature:
     mecab_compound: Optional[int] = None
     begin: Optional[int] = None
     end: Optional[int] = None
-    label: Optional[str] = None
+    label: Optional[str] = "O"
 
 
 @dataclass
