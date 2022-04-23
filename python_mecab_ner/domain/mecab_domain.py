@@ -27,6 +27,15 @@ class MecabPatternData:
 
 
 @dataclass
+class TokenIdx:
+    space: Optional[int] = None
+    mecab_token: Optional[int] = None
+    mecab_compound: Optional[int] = None
+    begin: Optional[int] = None
+    end: Optional[int] = None
+
+
+@dataclass
 class MecabWordFeature:
     word: str
     pos: str
@@ -37,11 +46,6 @@ class MecabWordFeature:
     start_pos: str
     end_pos: str
     expression: str
-    space_token_idx: Optional[int] = None
-    mecab_token_idx: Optional[int] = None
-    mecab_token_compound_idx: Optional[int] = None
-    mecab_exact_start_idx: Optional[int] = None
-    mecab_exact_end_idx: Optional[int] = None
 
 
 @dataclass
