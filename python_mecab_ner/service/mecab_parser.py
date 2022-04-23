@@ -135,29 +135,29 @@ class MecabParser:
 
         exact_idx_string = sentence
         for compound_include_item in self.gen_mecab_token_feature(sentence=sentence):
-            copy_compound_include_item = copy.deepcopy(compound_include_item)
             if compound_include_item.type in [self.COMPOUND, self.INFLECT]:
                 compound_item_list = compound_include_item.expression.split("+")
                 for compound_item in compound_item_list:
                     word, pos_tag, _ = compound_item.split("/")
 
-                    copy_compound_include_item.word = word
-                    copy_compound_include_item.pos = pos_tag
+                    exact_idx_string = self.get_exact_idx(compound_include_item, exact_idx_string, word)
 
-                    exact_idx_string = self.get_exact_idx(compound_include_item, copy_compound_include_item, exact_idx_string)
+                    compound_include_item.word = word
+                    compound_include_item.pos = pos_tag
+                    copy_compound_include_item = copy.deepcopy(compound_include_item)
 
                     yield word, copy_compound_include_item
 
             else:
-                exact_idx_string = self.get_exact_idx(compound_include_item, copy_compound_include_item,
-                                                      exact_idx_string)
-                yield compound_include_item.word, copy_compound_include_item
+                exact_idx_string = self.get_exact_idx(compound_include_item,
+                                                      exact_idx_string, compound_include_item.word)
+                yield compound_include_item.word, compound_include_item
 
-    def get_exact_idx(self, compound_include_item, copy_compound_include_item, exact_idx_string):
-        if compound_include_item.type == self.INFLECT:
-            exact_token = compound_include_item.reading
+    def get_exact_idx(self, copy_compound_include_item, exact_idx_string, word):
+        if copy_compound_include_item.type == self.INFLECT:
+            exact_token = copy_compound_include_item.reading
         else:
-            exact_token = compound_include_item.word
+            exact_token = word
         index_string = exact_idx_string.find(exact_token)
         if index_string != STRING_NOT_FOUND:
             len_pattern = len(exact_token)
