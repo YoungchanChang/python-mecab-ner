@@ -40,6 +40,8 @@ class MecabWordFeature:
     space_token_idx: Optional[int] = None
     mecab_token_idx: Optional[int] = None
     mecab_token_compound_idx: Optional[int] = None
+    mecab_exact_start_idx: Optional[int] = None
+    mecab_exact_end_idx: Optional[int] = None
 
 
 @dataclass
