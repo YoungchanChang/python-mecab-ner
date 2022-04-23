@@ -128,7 +128,7 @@ def test_mecab_storage(mock_mecab_parser_sentence):
     토큰화된 단어 원문으로 복구하는 기능
     """
     mecab_parser = MecabParser()
-    test_mecab_list = list(mecab_parser.gen_mecab_compound_token_feature("그러니까 전철역이 그게 뭐 어쩌고 저쩟다는 거지"))
+    test_mecab_list = list(mecab_parser.gen_mecab_compound_token_feature('그러니까 전철역이 그게 뭐 어쩌고 저쩟다는 거지'))
 
     test_mecab_sentence = " ".join([x[0] for x in test_mecab_list])
     assert test_mecab_sentence == '그러니까 전철 역 이 그것 이 뭐 어쩌 고 저 쩟 다는 거 이 지'
@@ -137,3 +137,21 @@ def test_mecab_storage(mock_mecab_parser_sentence):
     restore_list = mecab_storage.reverse_compound_tokens(test_mecab_list)
 
     assert restore_list == ['그러니까', '전철역이', '그게', '뭐', '어쩌고', '저쩟다는', '거지']
+
+
+    test_mecab_sentence = " ".join([x[0] for x in test_mecab_list])
+    assert test_mecab_sentence == '그러니까 전철 역 이 그것 이 뭐 어쩌 고 저 쩟 다는 거 이 지'
+
+    mecab_storage = MecabStorage()
+    restore_list = mecab_storage.reverse_compound_tokens(test_mecab_list)
+
+    assert restore_list == ['그러니까', '전철역이', '그게', '뭐', '어쩌고', '저쩟다는', '거지']
+
+    test_sentence = '아~ 제목을 그냥 탄소 아~ 그리고 인간 원리 다중 우주 아~ 이런 제목을 잡았는데 어~ 뭐 뭐 물리학 하시는 분이나 천문학 하시는 분은 딱을 제목만 보고도 아~ 무슨 얘기할 거다라는 걸 아마 짐작을 하실 것 같습니다.'
+    test_mecab_list = list(mecab_parser.gen_mecab_compound_token_feature(test_sentence))
+
+    restore_list = mecab_storage.reverse_compound_tokens(test_mecab_list)
+
+    restore_sentence = " ".join(restore_list)
+
+    assert test_sentence == restore_sentence
