@@ -47,7 +47,7 @@ def test_gen_mecab_token_feature(mock_mecab_parser_sentence: dict):
     assert len(mecab_parse_results) == 7
 
     for idx, mecab_parse_item in enumerate(mecab_parse_results):
-        assert mecab_parse_item.mecab_token_idx == idx
+        assert mecab_parse_item.mecab_token == idx
 
     parse_sentence = " ".join([x.word for x in mecab_parse_results])
     assert parse_sentence == '나 는 서울대 병원 에 갔 어'
@@ -56,7 +56,7 @@ def test_gen_mecab_token_feature(mock_mecab_parser_sentence: dict):
     mecab_parse_results = list(mecab_parser.gen_mecab_compound_token_feature(mock_mecab_parser_sentence.get("병원_sentence")))
 
     for idx, mecab_parse_item in enumerate(mecab_parse_results):
-        assert mecab_parse_item[1].mecab_token_compound_idx == idx
+        assert mecab_parse_item[1].mecab_compound == idx
 
     assert len(mecab_parse_results) == 9
 
@@ -128,12 +128,12 @@ def test_mecab_storage(mock_mecab_parser_sentence):
     토큰화된 단어 원문으로 복구하는 기능
     """
     mecab_parser = MecabParser()
-    test_mecab_list = list(mecab_parser.gen_mecab_compound_token_feature("그러니까 그게 뭐 어쩌고 저쩟다는 거지"))
+    test_mecab_list = list(mecab_parser.gen_mecab_compound_token_feature("그러니까 전철역이 그게 뭐 어쩌고 저쩟다는 거지"))
 
     test_mecab_sentence = " ".join([x[0] for x in test_mecab_list])
-    assert test_mecab_sentence == '그러니까 그것 이 뭐 어쩌 고 저 쩟 다는 거 이 지'
+    assert test_mecab_sentence == '그러니까 전철 역 이 그것 이 뭐 어쩌 고 저 쩟 다는 거 이 지'
 
-    test_mecab_feature = [x[1] for x in test_mecab_list]
-    restore_list = MecabStorage().restore_mecab_tokens(test_mecab_feature)
+    mecab_storage = MecabStorage()
+    restore_list = mecab_storage.reverse_compound_tokens(test_mecab_list)
 
-    assert restore_list == ['그러니까', '그게', '뭐', '어쩌고', '저쩟다는', '거지']
+    assert restore_list == ['그러니까', '전철역이', '그게', '뭐', '어쩌고', '저쩟다는', '거지']
