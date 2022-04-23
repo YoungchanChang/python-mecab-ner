@@ -34,6 +34,85 @@ class CategoryLoadStorage:
         self.counter_near_dict = Counter()  # 검색용 점수 스코어 단어
 
 
+def get_only_entity(plain_mecab_result):
+    mecab_storage = MecabStorage()
+    bio_all_list = []
+    bio_item = []
+    for plain_mecab_item in plain_mecab_result:
+        plain_word, mecab_feature = plain_mecab_item
+        if mecab_feature.label.startswith("I"):
+            bio_item.append(plain_mecab_item)
+
+        elif mecab_feature.label.startswith("B"):
+            if bio_item != []:
+                bio_all_list.append(bio_item)
+                bio_item = []
+            bio_item.append(plain_mecab_item)
+
+        elif mecab_feature.label == "O" and bio_item != []:
+            bio_all_list.append(bio_item)
+            bio_item = []
+
+    filter_ne_list = []
+    for bio_each_item in bio_all_list:
+        answer = mecab_storage.reverse_compound_tokens(bio_each_item)
+        answer = " ".join(answer)
+        begin_idx = bio_each_item[0][1].begin
+        end_idx = begin_idx + len(answer)
+        label = bio_each_item[0][1].label.replace("B-", "")
+        all_form = f"<{answer}:{label}:{begin_idx}-{end_idx}>"
+        filter_ne_list.append(all_form)
+    return filter_ne_list
+
+def set_bi_tag(sentence, plain_mecab_result, ne_item, label, ne_begin=None, ne_end=None):
+    mecab_parser = MecabParser()
+
+    if ne_begin is None:
+        ne_begin = sentence.find(ne_item)
+        ne_end = sentence.find(ne_item) + len(ne_item)
+
+    document_ne_items = ne_item.split()
+    for ne_idx, document_ne_item in enumerate(document_ne_items):
+        exact_idx_string = document_ne_item
+
+        if ne_idx == 0:
+            status = "B-"
+        else:
+            status = "I-"
+
+        for plain_idx, plain_mecab_item in enumerate(plain_mecab_result):
+
+            if (exact_idx_string.startswith("*")): #물리학, 한 지점, 천문학잔데 - 잔데 # 하난데 - 하나 인데, 73, 110
+                status = "I-"
+
+            if exact_idx_string.replace("*", "") == "":
+                break
+
+
+
+            plain_mecab_word, plain_mecab_feature = plain_mecab_item
+            # print(plain_mecab_word)
+            if ne_begin >= plain_mecab_item[1].begin and ne_begin <= plain_mecab_feature.end and plain_mecab_feature.label == "O":
+                plain_mecab_result[plain_idx][1].label = status + label
+                exact_idx_string = mecab_parser.get_exact_idx(plain_mecab_feature, exact_idx_string,
+                                                              plain_mecab_feature.word, change_compound=False)
+                if exact_idx_string == document_ne_item:
+                    break
+            elif ne_end >= plain_mecab_item[1].begin and ne_end <= plain_mecab_feature.end and plain_mecab_feature.label == "O":
+                plain_mecab_result[plain_idx][1].label = status + label
+                exact_idx_string = mecab_parser.get_exact_idx(plain_mecab_feature, exact_idx_string,
+                                                              plain_mecab_feature.word, change_compound=False)
+                if exact_idx_string == document_ne_item:
+                    break
+            elif plain_mecab_feature.begin >= ne_begin and plain_mecab_feature.end <= ne_end and plain_mecab_feature.label == "O":
+                plain_mecab_result[plain_idx][1].label = status + label
+                exact_idx_string = mecab_parser.get_exact_idx(plain_mecab_feature, exact_idx_string,
+                                                              plain_mecab_feature.word, change_compound=False)
+                if exact_idx_string == document_ne_item:
+                    break
+
+
+
 def set_cat_dict(ner_text, category_dictionary, entity=True):
     DUPLICATE_DISTANCE = 2
     mecab_parser = MecabParser()
