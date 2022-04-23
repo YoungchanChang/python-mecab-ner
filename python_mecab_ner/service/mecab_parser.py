@@ -151,12 +151,14 @@ class MecabParser:
             else:
                 exact_idx_string = self.get_exact_idx(compound_include_item,
                                                       exact_idx_string, compound_include_item.word)
+
                 yield compound_include_item.word, compound_include_item
 
     def get_exact_idx(self, copy_compound_include_item, exact_idx_string, word, change_compound=True):
 
         if copy_compound_include_item.type == self.INFLECT:
-            if copy_compound_include_item.start_pos == copy_compound_include_item.pos: #
+
+            if copy_compound_include_item.start_pos == copy_compound_include_item.pos:
                 exact_token = copy_compound_include_item.reading
             else:
                 return exact_idx_string
@@ -165,6 +167,8 @@ class MecabParser:
 
 
         index_string = exact_idx_string.find(exact_token)
+
+
         if index_string != STRING_NOT_FOUND:
             len_pattern = len(exact_token)
             if change_compound:
@@ -172,6 +176,7 @@ class MecabParser:
                 copy_compound_include_item.end = index_string + len_pattern
             exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, index_string)
             return exact_idx_string
+
         return exact_idx_string
 
     def gen_mecab_compound_token_feature(self, sentence: str) -> Generator:
