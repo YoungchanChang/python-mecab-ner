@@ -71,7 +71,7 @@ def set_cat_dict(ner_text, category_dictionary, entity=True):
             counter_near_list = []
             for i in range(max(0, ner_found_item[2][0] - DUPLICATE_DISTANCE), min(len(plain_mecab_result), ner_found_item[2][0] + DUPLICATE_DISTANCE), 1):
                 for plan_mecab_item in plain_mecab_result:
-                    if plan_mecab_item[1].space_token_idx == i:
+                    if plan_mecab_item[1].space == i:
                         counter_near_list.append((plan_mecab_item[1].word, plan_mecab_item[1].pos))
             category_dictionary[ner_found_item[1]].counter_near_dict += Counter(counter_near_list)
 
@@ -127,7 +127,7 @@ class NerExtractor:
     def get_token_value(self, mecab_parse_token, pos_seq_range):
         token_found = mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]
         restored_tokens = self.mecab_storage.reverse_compound_tokens(token_found)
-        token_idx = int(sum([x[1].mecab_token_compound_idx for x in token_found]) / len(token_found))
+        token_idx = int(sum([x[1].mecab_compound for x in token_found]) / len(token_found))
         return token_found, restored_tokens, token_idx
 
 
@@ -276,9 +276,9 @@ def get_matched(entity_list: list, intent_list: list):
 
         if matched_intent:
             if matched_intent[2] > entity_item[2]:
-                min_val = entity_item[4][0][1].mecab_token_compound_idx
+                min_val = entity_item[4][0][1].mecab_compound
             else:
-                min_val = matched_intent[4][0][1].mecab_token_compound_idx
+                min_val = matched_intent[4][0][1].mecab_compound
 
             matched.append([entity_item, matched_intent, min_val])
     return matched
@@ -302,7 +302,7 @@ def delete_duplicate(mecab_parse_token, data_list, data_load_storage):
             max_score = -math.inf
             max_value = None
             for duplicate_item in duplicate_value:
-                mecab_token_idx = duplicate_item[3][1].mecab_token_compound_idx
+                mecab_token_idx = duplicate_item[3][1].mecab_compound
                 score = 0
                 for i in range(max(0,mecab_token_idx-DUPLICATE_DISTANCE), min(len(mecab_parse_token), mecab_token_idx+DUPLICATE_DISTANCE), 1):
                     if i == mecab_token_idx:

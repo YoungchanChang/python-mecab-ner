@@ -199,7 +199,7 @@ class MecabNer(MecabDataController):
 
         for idx_range in range(mecab_category_item.start_idx - 1, end_point, -1):
             if self.mecab_parsed_list[idx_range][MECAB_FEATURE].pos in self.INFER_ENTITY_POS_LIST:
-                mecab_category_item.start_idx = self.mecab_parsed_list[idx_range][MECAB_FEATURE].mecab_token_compound_idx
+                mecab_category_item.start_idx = self.mecab_parsed_list[idx_range][MECAB_FEATURE].mecab_compound
                 continue
             break
         return mecab_category_item

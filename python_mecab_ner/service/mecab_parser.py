@@ -117,12 +117,12 @@ class MecabParser:
 
         for mecab_token_idx, mecab_token in enumerate(lattice):
             mecab_token_feature = _get_mecab_feature(mecab_token)
-            mecab_token_feature.mecab_token_idx = mecab_token_idx
+            mecab_token_feature.mecab_token = mecab_token_idx
 
             space_token_idx = self._get_space_token_idx(sentence_split, mecab_token_feature)
 
             if space_token_idx is not False:
-                mecab_token_feature.space_token_idx = space_token_idx
+                mecab_token_feature.space = space_token_idx
                 mecab_token_feature.word = mecab_token_feature.word
 
                 yield mecab_token_feature
@@ -161,8 +161,8 @@ class MecabParser:
         index_string = exact_idx_string.find(exact_token)
         if index_string != STRING_NOT_FOUND:
             len_pattern = len(exact_token)
-            copy_compound_include_item.mecab_exact_start_idx = index_string
-            copy_compound_include_item.mecab_exact_end_idx = index_string + len_pattern
+            copy_compound_include_item.begin = index_string
+            copy_compound_include_item.end = index_string + len_pattern
             exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, index_string)
             return exact_idx_string
         return exact_idx_string
@@ -175,7 +175,7 @@ class MecabParser:
 
         for idx, x in enumerate(list(self.tokenize_mecab_compound(sentence=sentence))):
             copy_x = copy.deepcopy(x)
-            copy_x[1].mecab_token_compound_idx = idx
+            copy_x[1].mecab_compound = idx
             yield copy_x
 
     def get_word_from_mecab_compound(self, sentence: str, is_list=False):

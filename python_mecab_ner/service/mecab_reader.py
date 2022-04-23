@@ -61,7 +61,7 @@ def get_ner_found_list(nert_item_idx: list, plain_mecab_result: list):
 
             reading_idx = str_item.find(reading_value)
             # 토큰 인덱스 범위 안에 들어가고, 문자열을 찾을 때
-            if (plain_mecab_item[1].space_token_idx in ner_item[2]) and (reading_idx != -1):
+            if (plain_mecab_item[1].space in ner_item[2]) and (reading_idx != -1):
                 str_item = delete_pattern_from_string(str_item, reading_value, reading_idx)
                 tmp_ner_list.append((reading_value, plain_mecab_item[1].pos))
                 save_last_token = reading_value

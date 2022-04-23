@@ -45,10 +45,10 @@ class MecabStorage:
         """
         space_mecab_list = []
         for parse_token_item in parsed_tokens:
-            space_mecab_token = (parse_token_item.space_token_idx, parse_token_item.mecab_token_idx)
+            space_mecab_token = (parse_token_item.space, parse_token_item.mecab_token)
             if space_mecab_token not in space_mecab_list:
                 space_mecab_list.append(space_mecab_token)
-                self._append(data, parse_token_item.space_token_idx, parse_token_item.reading)
+                self._append(data, parse_token_item.space, parse_token_item.reading)
         return self._mecab_reverse(data)
 
     def reverse_compound_tokens(self, parse_compound_tokens):
@@ -68,12 +68,12 @@ class MecabStorage:
         for parse_token_item in parse_compound_tokens:
 
             if parse_token_item[MECAB_WORD_FEATURE].type is None:
-                self._append(data, parse_token_item[MECAB_WORD_FEATURE].space_token_idx, parse_token_item[MECAB_WORD_FEATURE].word)
+                self._append(data, parse_token_item[MECAB_WORD_FEATURE].space, parse_token_item[MECAB_WORD_FEATURE].word)
                 tmp_word = None
                 continue
 
             if tmp_word == parse_token_item[MECAB_WORD_FEATURE].reading and (
-                    tmp_idx == parse_token_item[MECAB_WORD_FEATURE].space_token_idx):
+                    tmp_idx == parse_token_item[MECAB_WORD_FEATURE].space):
                 # 임시 단어와 읽는 단어가 일치하고(ex> Inflect) 같은 스페이스에 있으면 복구하지 않는다.
                 continue
 
@@ -82,8 +82,8 @@ class MecabStorage:
             else:
                 reading_value = parse_token_item[MECAB_WORD_FEATURE].word
 
-            self._append(data, parse_token_item[MECAB_WORD_FEATURE].space_token_idx, reading_value)
+            self._append(data, parse_token_item[MECAB_WORD_FEATURE].space, reading_value)
             tmp_word = reading_value
-            tmp_idx = parse_token_item[MECAB_WORD_FEATURE].space_token_idx
+            tmp_idx = parse_token_item[MECAB_WORD_FEATURE].space
 
         return self._mecab_reverse(data)
