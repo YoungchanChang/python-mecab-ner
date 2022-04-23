@@ -73,7 +73,8 @@ class MecabParser:
     """
 
     FIRST_WORD = 0
-    type_list = ["Compound", "Inflect"]
+    COMPOUND = "Compound"
+    INFLECT = "Inflect"
 
     def __init__(self, dicpath=''):
         argument = ''
@@ -132,18 +133,39 @@ class MecabParser:
         메캅으로 분석한 토큰 제너레이터로 반환 결과 중에 복합여, 굴절형태소 있는 경우 토큰화
         """
 
+        exact_idx_string = sentence
         for compound_include_item in self.gen_mecab_token_feature(sentence=sentence):
-            if compound_include_item.type in self.type_list:
+            copy_compound_include_item = copy.deepcopy(compound_include_item)
+            if compound_include_item.type in [self.COMPOUND, self.INFLECT]:
                 compound_item_list = compound_include_item.expression.split("+")
                 for compound_item in compound_item_list:
                     word, pos_tag, _ = compound_item.split("/")
-                    copy_compound_include_item = copy.deepcopy(compound_include_item)
+
                     copy_compound_include_item.word = word
                     copy_compound_include_item.pos = pos_tag
+
+                    exact_idx_string = self.get_exact_idx(compound_include_item, copy_compound_include_item, exact_idx_string)
+
                     yield word, copy_compound_include_item
 
             else:
-                yield compound_include_item.word, compound_include_item
+                exact_idx_string = self.get_exact_idx(compound_include_item, copy_compound_include_item,
+                                                      exact_idx_string)
+                yield compound_include_item.word, copy_compound_include_item
+
+    def get_exact_idx(self, compound_include_item, copy_compound_include_item, exact_idx_string):
+        if compound_include_item.type == self.INFLECT:
+            exact_token = compound_include_item.reading
+        else:
+            exact_token = compound_include_item.word
+        index_string = exact_idx_string.find(exact_token)
+        if index_string != STRING_NOT_FOUND:
+            len_pattern = len(exact_token)
+            copy_compound_include_item.mecab_exact_start_idx = index_string
+            copy_compound_include_item.mecab_exact_end_idx = index_string + len_pattern
+            exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, index_string)
+            return exact_idx_string
+        return exact_idx_string
 
     def gen_mecab_compound_token_feature(self, sentence: str) -> Generator:
 
