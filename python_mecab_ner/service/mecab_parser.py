@@ -139,11 +139,11 @@ class MecabParser:
                 compound_item_list = compound_include_item.expression.split("+")
                 for compound_item in compound_item_list:
                     word, pos_tag, _ = compound_item.split("/")
+                    compound_include_item.pos = pos_tag
 
                     exact_idx_string = self.get_exact_idx(compound_include_item, exact_idx_string, word)
 
                     compound_include_item.word = word
-                    compound_include_item.pos = pos_tag
                     copy_compound_include_item = copy.deepcopy(compound_include_item)
 
                     yield word, copy_compound_include_item
@@ -154,10 +154,16 @@ class MecabParser:
                 yield compound_include_item.word, compound_include_item
 
     def get_exact_idx(self, copy_compound_include_item, exact_idx_string, word):
+
         if copy_compound_include_item.type == self.INFLECT:
-            exact_token = copy_compound_include_item.reading
+            if copy_compound_include_item.start_pos == copy_compound_include_item.pos: #
+                exact_token = copy_compound_include_item.reading
+            else:
+                return exact_idx_string
         else:
             exact_token = word
+
+
         index_string = exact_idx_string.find(exact_token)
         if index_string != STRING_NOT_FOUND:
             len_pattern = len(exact_token)
