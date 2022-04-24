@@ -195,10 +195,13 @@ class MecabParser:
                 infect_end = None
                 for idx, compound_item in enumerate(compound_item_list):
                     word, pos_tag, _ = compound_item.split("/")
-                    compound_include_item.pos = pos_tag
-                    compound_include_item.word = word
+
 
                     if compound_include_item.type == MecabParser.INFLECT:  # 굴절어일 경우에 대한 처리
+
+                        if len(word) > len(compound_include_item.reading): # "당은"에 형태소 분석이 "민주당은"으로 잘못 분해됨
+                            word = compound_include_item.reading
+
                         len_pattern = len(compound_include_item.reading)
 
                         if idx == 0:
@@ -218,7 +221,9 @@ class MecabParser:
                     # yield word, copy_compound_include_item
                     else :
                         exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
-                        compound_include_item.word = word
+
+                    compound_include_item.pos = pos_tag
+                    compound_include_item.word = word
                     copy_compound_include_item = copy.deepcopy(compound_include_item)
 
                     yield word, copy_compound_include_item
