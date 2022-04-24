@@ -20,6 +20,18 @@ PART_INFER = 2
 BRUTE_INFER = 3
 
 
+def concat_tokens(bio_each_item, input_idx):
+    concat_tokens = ""
+    for bio_input_item in bio_each_item:
+        if input_idx == bio_input_item[1].begin:
+            concat_tokens += bio_input_item[0]
+            input_idx = bio_input_item[1].end
+        else:
+            concat_tokens += " "
+            concat_tokens += bio_input_item[0]
+            input_idx = bio_input_item[1].end
+
+
 def get_only_entity(plain_mecab_result):
     mecab_storage = MecabStorage()
     bio_all_list = []
@@ -45,37 +57,19 @@ def get_only_entity(plain_mecab_result):
 
     filter_ne_list = []
     for bio_each_item in bio_all_list:
-
-        begin_idx = bio_each_item[0][1].begin
-
-        input_idx = bio_each_item[0][1].begin
-        concat_tokens = ""
-        for bio_input_item in bio_each_item:
-            if input_idx == bio_input_item[1].begin:
-                concat_tokens += bio_input_item[0]
-                input_idx = bio_input_item[1].end
-            else:
-                concat_tokens += " "
-                concat_tokens += bio_input_item[0]
-                input_idx = bio_input_item[1].end
-
         label = bio_each_item[0][1].label.replace("B-", "")
 
         answer = mecab_storage.reverse_compound_tokens(bio_each_item)
         concat_tokens = " ".join(answer)
 
+        begin_idx = bio_each_item[0][1].begin
         end_idx = begin_idx + len(concat_tokens)
         all_form = f"<{concat_tokens}:{label}:{begin_idx}-{end_idx}>"
-        filter_ne_list.append(all_form)
+        if all_form not in filter_ne_list:
+            filter_ne_list.append(all_form)
 
-
-        #
-        # filter_ne_list.append(all_form)
-
-    # filter_ne_list = []
-    # for bio_each_item in bio_all_list:
-    #     filter_ne_list.append([(x[0], x[1].label, x[1].begin, x[1].end) for x in bio_each_item])
     return filter_ne_list
+
 
 
 class CategorySave:
