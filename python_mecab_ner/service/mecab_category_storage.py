@@ -39,17 +39,36 @@ def get_only_entity(plain_mecab_result):
 
     filter_ne_list = []
     for bio_each_item in bio_all_list:
-        answer = mecab_storage.reverse_compound_tokens(bio_each_item)
-        answer = " ".join(answer)
+
         begin_idx = bio_each_item[0][1].begin
-        end_idx = min(bio_each_item[-1][1].end, begin_idx + len(answer))
+
+        input_idx = bio_each_item[0][1].begin
+        concat_tokens = ""
+        for bio_input_item in bio_each_item:
+            if input_idx == bio_input_item[1].begin:
+                concat_tokens += bio_input_item[0]
+                input_idx = bio_input_item[1].end
+            else:
+                concat_tokens += " "
+                concat_tokens += bio_input_item[0]
+                input_idx = bio_input_item[1].end
+
         label = bio_each_item[0][1].label.replace("B-", "")
-        all_form = f"<{answer}:{label}:{begin_idx}-{end_idx}>"
+
+        answer = mecab_storage.reverse_compound_tokens(bio_each_item)
+        concat_tokens = " ".join(answer)
+
+        end_idx = begin_idx + len(concat_tokens)
+        all_form = f"<{concat_tokens}:{label}:{begin_idx}-{end_idx}>"
         filter_ne_list.append(all_form)
 
-    filter_ne_list = []
-    for bio_each_item in bio_all_list:
-        filter_ne_list.append([(x[0], x[1].label, x[1].begin, x[1].end) for x in bio_each_item])
+
+        #
+        # filter_ne_list.append(all_form)
+
+    # filter_ne_list = []
+    # for bio_each_item in bio_all_list:
+    #     filter_ne_list.append([(x[0], x[1].label, x[1].begin, x[1].end) for x in bio_each_item])
     return filter_ne_list
 
 
