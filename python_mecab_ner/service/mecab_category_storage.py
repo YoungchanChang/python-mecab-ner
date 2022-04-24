@@ -119,6 +119,7 @@ class CategorySave:
                     exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, status)
 
 
+
     def get_exact_string(self, exact_idx_string, label, plain_idx, plain_mecab_feature, status):
         """받침 있거나, 복합어이어서 문자열 찾지 못한 경우"""
 
@@ -132,18 +133,18 @@ class CategorySave:
                 return exact_idx_string
 
         # 1. word 단위로 찾는다. 2. 자모 단위로 찾는다.
-        jaso_exact_idx_string = to_jaso(exact_idx_string)
-        jaso_exact_token = to_jaso(plain_mecab_feature.word)
+        token_jaso = to_jaso(exact_idx_string)
+        reading_jaso = to_jaso(plain_mecab_feature.reading)
 
-        if len(jaso_exact_token) == 1: # ㄹ같이 받침으로 된 경우
+        if len(plain_mecab_feature.word) == 1: # ㄹ같이 받침으로 된 경우
             self.mecab_parse_tokens[plain_idx][1].label = status + label  # 라벨 변경
             return exact_idx_string
 
-        jamo_first_range = subs_str_finder(jaso_exact_token, jaso_exact_idx_string)
+        jaso_contain_idx = jamo_contains(token_jaso, reading_jaso)
 
-        if jamo_first_range:
-            get_original_jamo = join_jamos(jaso_exact_idx_string)
-            exact_idx_string_return = delete_pattern_from_string(jaso_exact_token, jaso_exact_idx_string, jamo_first_range[0])
+        if jaso_contain_idx:
+            get_original_jamo = join_jamos(token_jaso)
+            exact_idx_string_return = delete_pattern_from_string(reading_jaso, token_jaso, jaso_contain_idx[0])
             exact_idx_string_return = join_jamos(exact_idx_string_return)
             self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo # 일치하는 글자로 변경
             self.mecab_parse_tokens[plain_idx][1].label = status + label # 라벨 변경
@@ -152,7 +153,15 @@ class CategorySave:
             self.mecab_parse_tokens[plain_idx][1].label = status + label
         return exact_idx_string
 
-
+def jamo_contains(small, big):
+    # 정보의 순서가 중요할 때 사용
+    for i in range(len(big) - len(small) + 1):
+        for j in range(len(small)):
+            if big[i + j] != small[j]:
+                break
+        else:
+            return i, i + len(small)
+    return False
 def set_cat_dict(ner_text, category_dictionary, entity=True):
     DUPLICATE_DISTANCE = 2
     mecab_parser = MecabParser()
