@@ -163,7 +163,7 @@ class MecabParser:
         """
         메캅으로 분석한 토큰 제너레이터로 반환 결과 중에 복합여, 굴절형태소 있는 경우 토큰화
         """
-
+        exact_idx_string = self.sentence
         for compound_include_item in self.gen_mecab_token_feature():
             if compound_include_item.type in [self.COMPOUND, self.INFLECT]:
                 compound_item_list = compound_include_item.expression.split("+")
@@ -171,7 +171,7 @@ class MecabParser:
                     word, pos_tag, _ = compound_item.split("/")
                     compound_include_item.pos = pos_tag
 
-                    exact_idx_string = get_exact_idx(compound_include_item, self.sentence, word)
+                    exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
 
                     compound_include_item.word = word
                     copy_compound_include_item = copy.deepcopy(compound_include_item)
@@ -180,7 +180,7 @@ class MecabParser:
 
             else:
                 exact_idx_string = get_exact_idx(compound_include_item,
-                                                      self.sentence, compound_include_item.word)
+                                                      exact_idx_string, compound_include_item.word)
 
                 yield compound_include_item.word, compound_include_item
 
