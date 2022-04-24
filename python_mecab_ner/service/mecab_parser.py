@@ -8,6 +8,17 @@ from mecab import MeCabError
 from python_mecab_ner.domain.mecab_domain import MecabWordFeature
 
 
+def subs_str_finder(control_s, sub_str):
+    """
+    Finds indexes of all sub_str occurences in control_s.
+    """
+    sub_len = len(sub_str)
+
+    while sub_str in control_s:
+        first_index = control_s.find(sub_str)
+        second_index = first_index + sub_len
+        return first_index, second_index
+
 def delete_pattern_from_string(string, pattern, index, nofail=False):
     """ 문자열에서 패턴을 찾아서 *로 변환해주는 기능 """
 
@@ -67,9 +78,8 @@ def _get_mecab_feature(node) -> MecabWordFeature:
 
 def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_compound=True):
 
-    if copy_compound_include_item.type == MecabParser.INFLECT:
-
-        if copy_compound_include_item.start_pos == copy_compound_include_item.pos:
+    if copy_compound_include_item.type == MecabParser.INFLECT: # 굴절어일 경우에 대한 처리
+        if copy_compound_include_item.start_pos == copy_compound_include_item.pos: # 처음 토큰이 모든 정보 포함
             exact_token = copy_compound_include_item.reading
         else:
             return exact_idx_string
@@ -86,11 +96,11 @@ def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_com
         exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, index_string)
         return exact_idx_string
 
-    if exact_idx_string.find(copy_compound_include_item.word) != STRING_NOT_FOUND: #하난데,에서 하나라도 일치하는가?
-        if change_compound:
-            copy_compound_include_item.begin = index_string
-            copy_compound_include_item.end = index_string + len_pattern
-        exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, 0)
+    # if exact_idx_string.find(copy_compound_include_item.word) != STRING_NOT_FOUND: #하난데,에서 하나라도 일치하는가?
+    #     if change_compound:
+    #         copy_compound_include_item.begin = index_string
+    #         copy_compound_include_item.end = index_string + len_pattern
+    #     exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, 0)
 
     return exact_idx_string
 
