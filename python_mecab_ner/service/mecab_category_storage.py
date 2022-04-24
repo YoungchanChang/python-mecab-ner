@@ -3,9 +3,11 @@ import re
 from collections import defaultdict, Counter, deque
 import copy
 
-from service.mecab_parser import MecabParser, get_exact_idx
+from service.mecab_parser import MecabParser, get_exact_idx, delete_pattern_from_string, \
+    subs_str_finder
 from service.mecab_reader import get_ner_item_idx, get_ner_found_list
 from service.mecab_storage import MecabStorage
+from service.unicode import split_syllables, join_jamos
 
 entity_last_pos = ["NNG","NNP","NNB","NNBC","NR","NP","VV","VA","MM","MAG","IC","JKG","JKB","JKV","JKQ","JX","JC","ETN","ETM","XPN","XSN","XSV","XSA","XR","SY", "SL","SH","SN",]
 intent_last_pos = ["VV", "VA", "XSV", "XSA", "IC", "EP", "EF", "EC",]
@@ -123,10 +125,30 @@ class CategorySave:
         """받침 있거나, 복합어이어서 문자열 찾지 못한 경우"""
         exact_idx_string_return = get_exact_idx(plain_mecab_feature, exact_idx_string,
                                                              plain_mecab_feature.word, change_compound=False)
-        if exact_idx_string != exact_idx_string_return or len(plain_mecab_word) == 1:  # 바뀐 값이 있거나, ㄹ같이 받침인 경우
+        if exact_idx_string != exact_idx_string_return:  # 바뀐 값이 있거나, ㄹ같이 받침인 경우
             exact_idx_string = exact_idx_string_return
             self.mecab_parse_tokens[plain_idx][1].label = status + label
             return exact_idx_string
+
+        # 1. word 단위로 찾는다. 2. 자모 단위로 찾는다.
+        jaso_exact_idx_string = split_syllables(exact_idx_string)
+        jaso_exact_token = split_syllables(plain_mecab_feature.word)
+
+        if len(jaso_exact_token) == 1: # ㄹ같이 받침으로 된 경우
+            self.mecab_parse_tokens[plain_idx][1].label = status + label  # 라벨 변경
+            return exact_idx_string
+
+        jamo_first_range = subs_str_finder(jaso_exact_token, jaso_exact_idx_string)
+
+        if jamo_first_range:
+            get_original_jamo = join_jamos(jaso_exact_idx_string)
+            exact_idx_string_return = delete_pattern_from_string(jaso_exact_token, jaso_exact_idx_string, a[0])
+            exact_idx_string_return = join_jamos(exact_idx_string_return)
+            self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo # 일치하는 글자로 변경
+            self.mecab_parse_tokens[plain_idx][1].label = status + label # 라벨 변경
+            return exact_idx_string_return.replace("*", "")
+        if "EF" not in plain_mecab_feature.expression:
+            self.mecab_parse_tokens[plain_idx][1].label = status + label
         return exact_idx_string
 
 
