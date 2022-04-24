@@ -7,7 +7,7 @@ from service.mecab_parser import MecabParser, get_exact_idx, delete_pattern_from
     subs_str_finder
 from service.mecab_reader import get_ner_item_idx, get_ner_found_list
 from service.mecab_storage import MecabStorage
-from service.unicode import split_syllables, join_jamos
+from service.unicode import *
 
 entity_last_pos = ["NNG","NNP","NNB","NNBC","NR","NP","VV","VA","MM","MAG","IC","JKG","JKB","JKV","JKQ","JX","JC","ETN","ETM","XPN","XSN","XSV","XSA","XR","SY", "SL","SH","SN",]
 intent_last_pos = ["VV", "VA", "XSV", "XSA", "IC", "EP", "EF", "EC",]
@@ -38,6 +38,10 @@ def get_only_entity(plain_mecab_result):
         elif mecab_feature.label == "O" and bio_item != []:
             bio_all_list.append(bio_item)
             bio_item = []
+    else:
+        if bio_item != []:
+            bio_all_list.append(bio_item)
+
 
     filter_ne_list = []
     for bio_each_item in bio_all_list:
@@ -111,10 +115,10 @@ class CategorySave:
                 if plain_mecab_feature.label != "O": # 이미 세팅된 문자 백트래킹
                     continue
 
-                if ne_begin >= plain_mecab_feature.begin and ne_begin <= plain_mecab_feature.end: # 정답 시작 범위가 토큰 범위 사이에 있는 경우
+                if ne_begin >= plain_mecab_feature.begin and ne_begin < plain_mecab_feature.end: # 정답 시작 범위가 토큰 범위 사이에 있는 경우
                     exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, status)
 
-                elif ne_end >= plain_mecab_feature.begin and ne_end <= plain_mecab_feature.end: # 정답 범위가 토큰 끝 지점 사이에 있는 경우
+                elif ne_end > plain_mecab_feature.begin and ne_end <= plain_mecab_feature.end: # 정답 범위가 토큰 끝 지점 사이에 있는 경우
                     exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, status)
 
                 elif plain_mecab_feature.begin >= ne_begin and plain_mecab_feature.end <= ne_end:
@@ -123,16 +127,19 @@ class CategorySave:
 
     def get_exact_string(self, exact_idx_string, label, plain_idx, plain_mecab_feature, status):
         """받침 있거나, 복합어이어서 문자열 찾지 못한 경우"""
-        exact_idx_string_return = get_exact_idx(plain_mecab_feature, exact_idx_string,
-                                                             plain_mecab_feature.word, change_compound=False)
-        if exact_idx_string != exact_idx_string_return:  # 바뀐 값이 있거나, ㄹ같이 받침인 경우
-            exact_idx_string = exact_idx_string_return
-            self.mecab_parse_tokens[plain_idx][1].label = status + label
-            return exact_idx_string
+
+        if plain_mecab_feature.type != "Inflect":
+
+            exact_idx_string_return = get_exact_idx(plain_mecab_feature, exact_idx_string,
+                                                                 plain_mecab_feature.word, change_compound=False)
+            if exact_idx_string != exact_idx_string_return:  # 바뀐 값이 있거나, ㄹ같이 받침인 경우
+                exact_idx_string = exact_idx_string_return
+                self.mecab_parse_tokens[plain_idx][1].label = status + label
+                return exact_idx_string
 
         # 1. word 단위로 찾는다. 2. 자모 단위로 찾는다.
-        jaso_exact_idx_string = split_syllables(exact_idx_string)
-        jaso_exact_token = split_syllables(plain_mecab_feature.word)
+        jaso_exact_idx_string = to_jaso(exact_idx_string)
+        jaso_exact_token = to_jaso(plain_mecab_feature.word)
 
         if len(jaso_exact_token) == 1: # ㄹ같이 받침으로 된 경우
             self.mecab_parse_tokens[plain_idx][1].label = status + label  # 라벨 변경
@@ -146,8 +153,8 @@ class CategorySave:
             exact_idx_string_return = join_jamos(exact_idx_string_return)
             self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo # 일치하는 글자로 변경
             self.mecab_parse_tokens[plain_idx][1].label = status + label # 라벨 변경
-            return exact_idx_string_return.replace("*", "")
-        if "EF" not in plain_mecab_feature.expression:
+            return exact_idx_string_return.replace(NO_JONGSUNG, "")
+        if "EF" not in str(plain_mecab_feature.expression) or len(plain_mecab_feature.word) == 1:
             self.mecab_parse_tokens[plain_idx][1].label = status + label
         return exact_idx_string
 
