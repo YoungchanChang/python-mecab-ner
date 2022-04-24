@@ -112,16 +112,16 @@ class CategorySave:
                     continue
 
                 if ne_begin >= plain_mecab_feature.begin and ne_begin <= plain_mecab_feature.end: # 정답 시작 범위가 토큰 범위 사이에 있는 경우
-                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_word, status)
+                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, status)
 
                 elif ne_end >= plain_mecab_feature.begin and ne_end <= plain_mecab_feature.end: # 정답 범위가 토큰 끝 지점 사이에 있는 경우
-                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_word, status)
+                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, status)
 
                 elif plain_mecab_feature.begin >= ne_begin and plain_mecab_feature.end <= ne_end:
-                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_word, status)
+                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, status)
 
 
-    def get_exact_string(self, exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_word, status):
+    def get_exact_string(self, exact_idx_string, label, plain_idx, plain_mecab_feature, status):
         """받침 있거나, 복합어이어서 문자열 찾지 못한 경우"""
         exact_idx_string_return = get_exact_idx(plain_mecab_feature, exact_idx_string,
                                                              plain_mecab_feature.word, change_compound=False)
@@ -142,7 +142,7 @@ class CategorySave:
 
         if jamo_first_range:
             get_original_jamo = join_jamos(jaso_exact_idx_string)
-            exact_idx_string_return = delete_pattern_from_string(jaso_exact_token, jaso_exact_idx_string, a[0])
+            exact_idx_string_return = delete_pattern_from_string(jaso_exact_token, jaso_exact_idx_string, jamo_first_range[0])
             exact_idx_string_return = join_jamos(exact_idx_string_return)
             self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo # 일치하는 글자로 변경
             self.mecab_parse_tokens[plain_idx][1].label = status + label # 라벨 변경
