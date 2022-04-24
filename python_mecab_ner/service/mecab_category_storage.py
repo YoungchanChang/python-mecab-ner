@@ -47,22 +47,24 @@ def get_only_entity(plain_mecab_result):
         all_form = f"<{answer}:{label}:{begin_idx}-{end_idx}>"
         filter_ne_list.append(all_form)
 
-    # filter_ne_list = []
-    # for bio_each_item in bio_all_list:
-    #     filter_ne_list.append([(x[0], x[1].label, x[1].begin, x[1].end) for x in bio_each_item])
+    filter_ne_list = []
+    for bio_each_item in bio_all_list:
+        filter_ne_list.append([(x[0], x[1].label, x[1].begin, x[1].end) for x in bio_each_item])
     return filter_ne_list
 
 
 class CategorySave:
 
-    def __init__(self):
-        self.mecab_parser = MecabParser()
+    def __init__(self, sentence: str):
+        self.sentence = sentence
+        self.mecab_parser = MecabParser(sentence=sentence)
+        self.mecab_parse_tokens = list(self.mecab_parser.gen_mecab_compound_token_feature())
 
-    def set_bi_tag(self, sentence, plain_mecab_result, ne_item, label, ne_begin=None, ne_end=None):
+    def set_bi_tag(self, ne_item, label, ne_begin=None, ne_end=None):
         """ 문자열에서 bi 태그 정보 있을 시 해당 정보 세팅"""
         if ne_begin is None: # 문자열 직접 검색해서 시작, 끝점 변경
-            ne_begin = sentence.find(ne_item)
-            ne_end = sentence.find(ne_item) + len(ne_item)
+            ne_begin = self.sentence.find(ne_item)
+            ne_end = self.sentence.find(ne_item) + len(ne_item)
 
         document_ne_items = ne_item.split() # 띄어쓰기가 있는 경우 처리
 
@@ -74,12 +76,13 @@ class CategorySave:
             else:
                 status = "I-"
 
-            for plain_idx, plain_mecab_item in enumerate(plain_mecab_result):
+            for plain_idx, plain_mecab_item in enumerate(self.mecab_parse_tokens):
                 plain_mecab_word, plain_mecab_feature = plain_mecab_item
-                exact_idx_string = exact_idx_string.replace("*", "")
 
-                if (exact_idx_string.startswith("*")): #물리학, 한 지점, 천문학잔데 - 잔데 # 하난데 - 하나 인데, 73, 110
+                if exact_idx_string.startswith("*"): #물리학, 한 지점, 천문학잔데 - 잔데 # 하난데 - 하나 인데, 73, 110
                     status = "I-"
+
+                exact_idx_string = exact_idx_string.replace("*", "")
 
                 if exact_idx_string == "":
                     break
@@ -87,26 +90,23 @@ class CategorySave:
                 if plain_mecab_feature.label != "O": # 이미 세팅된 문자 백트래킹
                     continue
 
-                if ne_begin >= plain_mecab_feature.begin and ne_begin <= plain_mecab_feature.end:
-                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature,
-                                                        plain_mecab_result,
-                                                        plain_mecab_word, status)
-                elif ne_end >= plain_mecab_feature.begin and ne_end <= plain_mecab_feature.end:
-                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature,
-                                                        plain_mecab_result,
-                                                        plain_mecab_word, status)
+                if ne_begin >= plain_mecab_feature.begin and ne_begin <= plain_mecab_feature.end: # 정답 시작 범위가 토큰 범위 사이에 있는 경우
+                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_word, status)
+
+                elif ne_end >= plain_mecab_feature.begin and ne_end <= plain_mecab_feature.end: # 정답 범위가 토큰 끝 지점 사이에 있는 경우
+                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_word, status)
+
                 elif plain_mecab_feature.begin >= ne_begin and plain_mecab_feature.end <= ne_end:
-                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx,
-                                                        plain_mecab_feature, plain_mecab_result, plain_mecab_word, status)
+                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_word, status)
 
 
-    def get_exact_string(self, exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_result, plain_mecab_word, status):
+    def get_exact_string(self, exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_word, status):
         """받침 있거나, 복합어이어서 문자열 찾지 못한 경우"""
         exact_idx_string_return = get_exact_idx(plain_mecab_feature, exact_idx_string,
                                                              plain_mecab_feature.word, change_compound=False)
         if exact_idx_string != exact_idx_string_return or len(plain_mecab_word) == 1:  # 바뀐 값이 있거나, ㄹ같이 받침인 경우
             exact_idx_string = exact_idx_string_return
-            plain_mecab_result[plain_idx][1].label = status + label
+            self.mecab_parse_tokens[plain_idx][1].label = status + label
             return exact_idx_string
         return exact_idx_string
 
