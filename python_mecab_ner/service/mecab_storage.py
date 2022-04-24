@@ -77,7 +77,7 @@ class MecabStorage:
                 # 임시 단어와 읽는 단어가 일치하고(ex> Inflect) 같은 스페이스에 있으면 복구하지 않는다.
                 continue
 
-            if parse_token_item[MECAB_WORD_FEATURE].type == "Inflect":
+            if parse_token_item[MECAB_WORD_FEATURE].type == "Inflect" and parse_token_item[MECAB_WORD_FEATURE].pos not in ["NNG", "NNP", "XSN", "UNA"]:
                 reading_value = parse_token_item[MECAB_WORD_FEATURE].reading
             else:
                 reading_value = parse_token_item[MECAB_WORD_FEATURE].word
