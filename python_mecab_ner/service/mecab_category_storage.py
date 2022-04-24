@@ -58,10 +58,14 @@ def get_only_entity(plain_mecab_result):
         answer = mecab_storage.reverse_compound_tokens(bio_each_item)
         answer = " ".join(answer)
         begin_idx = bio_each_item[0][1].begin
-        end_idx = begin_idx + len(answer)
+        end_idx = min(bio_each_item[-1][1].end, begin_idx + len(answer))
         label = bio_each_item[0][1].label.replace("B-", "")
         all_form = f"<{answer}:{label}:{begin_idx}-{end_idx}>"
         filter_ne_list.append(all_form)
+
+    # filter_ne_list = []
+    # for bio_each_item in bio_all_list:
+    #     filter_ne_list.append([(x[0], x[1].label, x[1].begin, x[1].end) for x in bio_each_item])
     return filter_ne_list
 
 def set_bi_tag(sentence, plain_mecab_result, ne_item, label, ne_begin=None, ne_end=None):
@@ -82,6 +86,7 @@ def set_bi_tag(sentence, plain_mecab_result, ne_item, label, ne_begin=None, ne_e
             status = "I-"
 
         for plain_idx, plain_mecab_item in enumerate(plain_mecab_result):
+            plain_mecab_word, plain_mecab_feature = plain_mecab_item
 
             if (exact_idx_string.startswith("*")): #물리학, 한 지점, 천문학잔데 - 잔데 # 하난데 - 하나 인데, 73, 110
                 status = "I-"
@@ -90,27 +95,31 @@ def set_bi_tag(sentence, plain_mecab_result, ne_item, label, ne_begin=None, ne_e
             if exact_idx_string == "":
                 break
 
+            if plain_mecab_feature.label != "O":
+                continue
+
+            if ne_begin >= plain_mecab_feature.begin and ne_begin <= plain_mecab_feature.end:
+                exact_idx_string = get_exact_string(exact_idx_string, label, mecab_parser, plain_idx, plain_mecab_feature,
+                                                    plain_mecab_result,
+                                                    plain_mecab_word, status)
+            elif ne_end >= plain_mecab_feature.begin and ne_end <= plain_mecab_feature.end:
+                exact_idx_string = get_exact_string(exact_idx_string, label, mecab_parser, plain_idx, plain_mecab_feature,
+                                                    plain_mecab_result,
+                                                    plain_mecab_word, status)
+            elif plain_mecab_feature.begin >= ne_begin and plain_mecab_feature.end <= ne_end:
+                exact_idx_string = get_exact_string(exact_idx_string, label, mecab_parser, plain_idx,
+                                                    plain_mecab_feature, plain_mecab_result, plain_mecab_word, status)
 
 
-            plain_mecab_word, plain_mecab_feature = plain_mecab_item
-            # print(plain_mecab_word)
-            if ne_begin >= plain_mecab_item[1].begin and ne_begin <= plain_mecab_feature.end and plain_mecab_feature.label == "O":
-                exact_idx_string_return = mecab_parser.get_exact_idx(plain_mecab_feature, exact_idx_string,
-                                                              plain_mecab_feature.word, change_compound=False)
-                exact_idx_string = exact_idx_string_return
-                plain_mecab_result[plain_idx][1].label = status + label
-            elif ne_end >= plain_mecab_item[1].begin and ne_end <= plain_mecab_feature.end and plain_mecab_feature.label == "O":
-                exact_idx_string_return = mecab_parser.get_exact_idx(plain_mecab_feature, exact_idx_string,
-                                                              plain_mecab_feature.word, change_compound=False)
-                exact_idx_string = exact_idx_string_return
-                plain_mecab_result[plain_idx][1].label = status + label
-            elif plain_mecab_feature.begin >= ne_begin and plain_mecab_feature.end <= ne_end and plain_mecab_feature.label == "O":
-                exact_idx_string_return = mecab_parser.get_exact_idx(plain_mecab_feature, exact_idx_string,
-                                                              plain_mecab_feature.word, change_compound=False)
-                exact_idx_string = exact_idx_string_return
-                plain_mecab_result[plain_idx][1].label = status + label
-
-
+def get_exact_string(exact_idx_string, label, mecab_parser, plain_idx, plain_mecab_feature, plain_mecab_result,
+                     plain_mecab_word, status):
+    exact_idx_string_return = mecab_parser.get_exact_idx(plain_mecab_feature, exact_idx_string,
+                                                         plain_mecab_feature.word, change_compound=False)
+    if exact_idx_string != exact_idx_string_return or len(plain_mecab_word) == 1:  # 바뀐 값이 있거나, ㄹ같이 받침인 경우
+        exact_idx_string = exact_idx_string_return
+        plain_mecab_result[plain_idx][1].label = status + label
+        return exact_idx_string
+    return exact_idx_string
 
 
 def set_cat_dict(ner_text, category_dictionary, entity=True):
