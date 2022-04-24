@@ -6,6 +6,7 @@ from typing import Generator
 
 from mecab import MeCabError
 from python_mecab_ner.domain.mecab_domain import MecabWordFeature
+from service.unicode import *
 
 
 def subs_str_finder(control_s, sub_str):
@@ -91,6 +92,24 @@ def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_com
         exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, index_string)
         return exact_idx_string
 
+    # 자모단위로 검색
+    jaso_exact_idx_string = to_jaso(exact_idx_string)
+    jaso_exact_token = to_jaso(exact_token)
+
+    if len(jaso_exact_token) == 1:  # ㄹ같이 받침으로 된 경우
+        return exact_idx_string
+    jamo_first_range = subs_str_finder(jaso_exact_idx_string, jaso_exact_token)
+
+    if jamo_first_range:
+        get_original_jamo = join_jamos(jaso_exact_token)
+        exact_idx_string_return = join_jamos(jaso_exact_idx_string)
+        begin = jamo_first_range[0]
+        end = begin + len(get_original_jamo)
+        exact_idx_string_return = exact_idx_string_return[0:begin] + "*"*len(get_original_jamo) + exact_idx_string_return[end:]
+        copy_compound_include_item.begin = jamo_first_range[0]
+        copy_compound_include_item.end = jamo_first_range[0] + len(get_original_jamo)
+
+        return exact_idx_string_return.replace(NO_JONGSUNG, "")
     # if exact_idx_string.find(copy_compound_include_item.word) != STRING_NOT_FOUND: #하난데,에서 하나라도 일치하는가?
     #     if change_compound:
     #         copy_compound_include_item.begin = index_string
@@ -191,10 +210,15 @@ class MecabParser:
 
                         compound_include_item.begin = infect_begin
                         compound_include_item.end = infect_end
+                    #exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
 
-                    else:
+                    # compound_include_item.word = word
+                    # copy_compound_include_item = copy.deepcopy(compound_include_item)
+
+                    # yield word, copy_compound_include_item
+                    else :
                         exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
-
+                        compound_include_item.word = word
                     copy_compound_include_item = copy.deepcopy(compound_include_item)
 
                     yield word, copy_compound_include_item
