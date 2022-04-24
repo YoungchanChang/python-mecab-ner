@@ -1,11 +1,27 @@
 from dataclasses import dataclass
 from typing import Optional
-
+from collections import defaultdict, Counter
 
 @dataclass
 class Category:
     large: str
     small: str
+
+
+class CategorySaveStorage:
+    def __init__(self):
+        self.pos_dict = defaultdict(set) # 포맷과 마지막 값을 확인
+        self.word_dict = set() # 마지막 값을 확인
+        self.counter_dict = Counter() # 검색용 점수 스코어 단어
+        self.counter_near_dict = Counter()  # 검색용 점수 스코어 단어
+
+
+class CategoryLoadStorage:
+    def __init__(self):
+        self.pos_dict = defaultdict(dict)
+        self.word_dict = list()
+        self.counter_dict = Counter()
+        self.counter_near_dict = Counter()
 
 
 @dataclass
