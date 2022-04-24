@@ -78,13 +78,8 @@ def _get_mecab_feature(node) -> MecabWordFeature:
 
 def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_compound=True):
 
-    if copy_compound_include_item.type == MecabParser.INFLECT: # 굴절어일 경우에 대한 처리
-        if copy_compound_include_item.start_pos == copy_compound_include_item.pos: # 처음 토큰이 모든 정보 포함
-            exact_token = copy_compound_include_item.reading
-        else:
-            return exact_idx_string
-    else:
-        exact_token = word
+
+    exact_token = word
 
     index_string = exact_idx_string.find(exact_token)
 
@@ -177,13 +172,29 @@ class MecabParser:
         for compound_include_item in self.gen_mecab_token_feature():
             if compound_include_item.type in [self.COMPOUND, self.INFLECT]:
                 compound_item_list = compound_include_item.expression.split("+")
-                for compound_item in compound_item_list:
+                infect_begin = None
+                infect_end = None
+                for idx, compound_item in enumerate(compound_item_list):
                     word, pos_tag, _ = compound_item.split("/")
                     compound_include_item.pos = pos_tag
-
-                    exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
-
                     compound_include_item.word = word
+
+                    if compound_include_item.type == MecabParser.INFLECT:  # 굴절어일 경우에 대한 처리
+                        len_pattern = len(compound_include_item.reading)
+
+                        if idx == 0:
+                            index_string = exact_idx_string.find(compound_include_item.reading)
+                            exact_idx_string = delete_pattern_from_string(exact_idx_string,
+                                                                          compound_include_item.reading, index_string)
+                            infect_begin = index_string
+                            infect_end = index_string + len_pattern
+
+                        compound_include_item.begin = infect_begin
+                        compound_include_item.end = infect_end
+
+                    else:
+                        exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
+
                     copy_compound_include_item = copy.deepcopy(compound_include_item)
 
                     yield word, copy_compound_include_item
