@@ -134,7 +134,11 @@ class CategorySave:
 
         # 1. word 단위로 찾는다. 2. 자모 단위로 찾는다.
         token_jaso = to_jaso(exact_idx_string)
-        reading_jaso = to_jaso(plain_mecab_feature.reading)
+
+        read_item = plain_mecab_feature.reading
+        if plain_mecab_feature.reading is None:
+            read_item = plain_mecab_feature.word
+        reading_jaso = to_jaso(read_item)
 
         if len(plain_mecab_feature.word) == 1: # ㄹ같이 받침으로 된 경우
             self.mecab_parse_tokens[plain_idx][1].label = status + label  # 라벨 변경
@@ -149,7 +153,7 @@ class CategorySave:
             self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo # 일치하는 글자로 변경
             self.mecab_parse_tokens[plain_idx][1].label = status + label # 라벨 변경
             return exact_idx_string_return.replace(NO_JONGSUNG, "")
-        if "EF" not in str(plain_mecab_feature.expression) or len(plain_mecab_feature.word) == 1:
+        if "EF" not in str(plain_mecab_feature.expression) or len(read_item) == 1:
             self.mecab_parse_tokens[plain_idx][1].label = status + label
         return exact_idx_string
 
