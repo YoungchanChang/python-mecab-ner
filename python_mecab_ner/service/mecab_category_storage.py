@@ -140,15 +140,23 @@ class CategorySave:
             read_item = plain_mecab_feature.word
         reading_jaso = to_jaso(read_item)
 
-        if len(plain_mecab_feature.word) == 1: # ㄹ같이 받침으로 된 경우
+        if len(reading_jaso) == 1: # ㄹ같이 받침으로 된 경우
             self.mecab_parse_tokens[plain_idx][1].label = status + label  # 라벨 변경
             return exact_idx_string
 
-        jaso_contain_idx = jamo_contains(token_jaso, reading_jaso)
+        if len(token_jaso) > len(reading_jaso):
+            large_jaso = token_jaso
+            small_jaso = reading_jaso
+        else:
+            large_jaso = reading_jaso
+            small_jaso = token_jaso
+
+        jaso_contain_idx = jamo_contains(small_jaso, large_jaso)
+
 
         if jaso_contain_idx:
-            get_original_jamo = join_jamos(token_jaso)
-            exact_idx_string_return = delete_pattern_from_string(reading_jaso, token_jaso, jaso_contain_idx[0])
+            get_original_jamo = join_jamos(small_jaso)
+            exact_idx_string_return = delete_pattern_from_string(large_jaso, small_jaso, jaso_contain_idx[0])
             exact_idx_string_return = join_jamos(exact_idx_string_return)
             self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo # 일치하는 글자로 변경
             self.mecab_parse_tokens[plain_idx][1].label = status + label # 라벨 변경
