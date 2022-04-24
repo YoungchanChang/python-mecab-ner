@@ -76,7 +76,6 @@ def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_com
     else:
         exact_token = word
 
-
     index_string = exact_idx_string.find(exact_token)
 
     len_pattern = len(exact_token)
@@ -107,15 +106,17 @@ class MecabParser:
     COMPOUND = "Compound"
     INFLECT = "Inflect"
 
-    def __init__(self, dicpath=''):
+    def __init__(self, sentence: str, dicpath=''):
         argument = ''
 
         if dicpath != '':
             argument = '-d %s' % dicpath
 
+        self.sentence = sentence
+        self.sentence_token = sentence.split()
         self.tagger = _mecab.Tagger(argument)
 
-    def _get_space_token_idx(self, sentence_token: list, mecab_word_feature: MecabWordFeature) -> int:
+    def _get_space_token_idx(self, mecab_word_feature: MecabWordFeature) -> int:
 
         """
         스페이스로 토큰 분석한 인덱스 값 반환
@@ -123,26 +124,25 @@ class MecabParser:
         :return: 스페이스 토큰 분석한 결과
         """
 
-        for idx_token, sentence_token_item in enumerate(sentence_token):
+        for idx_token, sentence_token_item in enumerate(self.sentence_token):
 
             index_string = sentence_token_item.find(mecab_word_feature.word)
             if index_string != STRING_NOT_FOUND:
 
-                sentence_token[idx_token] = delete_pattern_from_string(sentence_token_item, mecab_word_feature.word, index_string)
+                self.sentence_token[idx_token] = delete_pattern_from_string(sentence_token_item, mecab_word_feature.word, index_string)
 
                 return idx_token
 
         return False
 
-    def gen_mecab_token_feature(self, sentence: str) -> Generator:
+    def gen_mecab_token_feature(self) -> Generator:
 
         """
         메캅으로 형태소 분석한 토큰 제너레이터로 반환
         스페이스로 분석한 토큰의 정보와 형태소로 분석한 토큰의 정보 포함
         """
 
-        lattice = _create_lattice(sentence)
-        sentence_split = sentence.split()
+        lattice = _create_lattice(self.sentence)
         if not self.tagger.parse(lattice):
             raise MeCabError(self.tagger.what())
 
@@ -150,7 +150,7 @@ class MecabParser:
             mecab_token_feature = _get_mecab_feature(mecab_token)
             mecab_token_feature.mecab_token = mecab_token_idx
 
-            space_token_idx = self._get_space_token_idx(sentence_split, mecab_token_feature)
+            space_token_idx = self._get_space_token_idx(mecab_token_feature)
 
             if space_token_idx is not False:
                 mecab_token_feature.space = space_token_idx
@@ -158,21 +158,20 @@ class MecabParser:
 
                 yield mecab_token_feature
 
-    def tokenize_mecab_compound(self, sentence: str) -> Generator:
+    def tokenize_mecab_compound(self) -> Generator:
 
         """
         메캅으로 분석한 토큰 제너레이터로 반환 결과 중에 복합여, 굴절형태소 있는 경우 토큰화
         """
 
-        exact_idx_string = sentence
-        for compound_include_item in self.gen_mecab_token_feature(sentence=sentence):
+        for compound_include_item in self.gen_mecab_token_feature():
             if compound_include_item.type in [self.COMPOUND, self.INFLECT]:
                 compound_item_list = compound_include_item.expression.split("+")
                 for compound_item in compound_item_list:
                     word, pos_tag, _ = compound_item.split("/")
                     compound_include_item.pos = pos_tag
 
-                    exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
+                    exact_idx_string = get_exact_idx(compound_include_item, self.sentence, word)
 
                     compound_include_item.word = word
                     copy_compound_include_item = copy.deepcopy(compound_include_item)
@@ -181,24 +180,24 @@ class MecabParser:
 
             else:
                 exact_idx_string = get_exact_idx(compound_include_item,
-                                                      exact_idx_string, compound_include_item.word)
+                                                      self.sentence, compound_include_item.word)
 
                 yield compound_include_item.word, compound_include_item
 
 
 
-    def gen_mecab_compound_token_feature(self, sentence: str) -> Generator:
+    def gen_mecab_compound_token_feature(self) -> Generator:
 
         """
         :return: 복합어를 분해한 메캅 토큰 순서가 들어간 단어
         """
 
-        for idx, x in enumerate(list(self.tokenize_mecab_compound(sentence=sentence))):
+        for idx, x in enumerate(list(self.tokenize_mecab_compound())):
             copy_x = copy.deepcopy(x)
             copy_x[1].mecab_compound = idx
             yield copy_x
 
-    def get_word_from_mecab_compound(self, sentence: str, is_list=False):
+    def get_word_from_mecab_compound(self, is_list=False):
 
         """
         메캅으로 분해된 문장에서 단어만 추출
@@ -208,9 +207,9 @@ class MecabParser:
         """
 
         if is_list:
-            return [x[self.FIRST_WORD] for x in list(self.gen_mecab_compound_token_feature(sentence=sentence))]
+            return [x[self.FIRST_WORD] for x in list(self.gen_mecab_compound_token_feature())]
 
-        return " ".join([x[self.FIRST_WORD] for x in list(self.gen_mecab_compound_token_feature(sentence=sentence))])
+        return " ".join([x[self.FIRST_WORD] for x in list(self.gen_mecab_compound_token_feature())])
 
 
 if __name__ == "__main__":
@@ -218,13 +217,13 @@ if __name__ == "__main__":
         test_sentence = "나는 서울대병원에 갔어"
 
         mecab_parse_results = list(
-            MecabParser().gen_mecab_token_feature(test_sentence))
+            MecabParser(sentence=test_sentence).gen_mecab_token_feature())
 
         for idx, mecab_parse_item in enumerate(mecab_parse_results):
             print(mecab_parse_item)
 
         mecab_parse_results = list(
-            MecabParser().gen_mecab_compound_token_feature(test_sentence))
+            MecabParser(sentence=test_sentence).gen_mecab_compound_token_feature())
 
         for idx, mecab_parse_item in enumerate(mecab_parse_results):
             print(mecab_parse_item)
