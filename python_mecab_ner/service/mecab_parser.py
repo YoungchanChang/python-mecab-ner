@@ -168,14 +168,19 @@ class MecabParser:
 
         index_string = exact_idx_string.find(exact_token)
 
-
+        len_pattern = len(exact_token)
         if index_string != STRING_NOT_FOUND:
-            len_pattern = len(exact_token)
             if change_compound:
                 copy_compound_include_item.begin = index_string
                 copy_compound_include_item.end = index_string + len_pattern
             exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, index_string)
             return exact_idx_string
+
+        if exact_idx_string.find(copy_compound_include_item.word) != STRING_NOT_FOUND: #하난데,에서 하나라도 일치하는가?
+            if change_compound:
+                copy_compound_include_item.begin = index_string
+                copy_compound_include_item.end = index_string + len_pattern
+            exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, 0)
 
         return exact_idx_string
 
