@@ -144,22 +144,23 @@ class CategorySave:
             self.mecab_parse_tokens[plain_idx][1].label = status + label  # 라벨 변경
             return exact_idx_string
 
-        if len(token_jaso) > len(reading_jaso):
-            large_jaso = token_jaso
-            small_jaso = reading_jaso
-        else:
-            large_jaso = reading_jaso
-            small_jaso = token_jaso
+        jaso_contain_idx = jamo_contains(reading_jaso, token_jaso)
 
-        jaso_contain_idx = jamo_contains(small_jaso, large_jaso)
+        if jaso_contain_idx is False: # 당이 찾고자 하는 글자이고, "당은"이 reading일 때
+            jaso_contain_idx = jamo_contains(token_jaso, reading_jaso)
+            if jaso_contain_idx:
+                get_original_jamo = join_jamos(token_jaso)
+                self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo
+                self.mecab_parse_tokens[plain_idx][1].label = status + label
+                return ""
 
-
-        if jaso_contain_idx:
-            get_original_jamo = join_jamos(small_jaso)
-            exact_idx_string_return = delete_pattern_from_string(large_jaso, small_jaso, jaso_contain_idx[0])
+        if jaso_contain_idx: # "해설사"가 찾고자 하는 글자이고 하 애 설사 로 있을 때
+            get_original_jamo = join_jamos(reading_jaso)
+            exact_idx_string_return = delete_pattern_from_string(token_jaso, reading_jaso, jaso_contain_idx[0])
             exact_idx_string_return = join_jamos(exact_idx_string_return)
             self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo # 일치하는 글자로 변경
             self.mecab_parse_tokens[plain_idx][1].label = status + label # 라벨 변경
+
             return exact_idx_string_return.replace(NO_JONGSUNG, "")
         if "EF" not in str(plain_mecab_feature.expression) or len(read_item) == 1:
             self.mecab_parse_tokens[plain_idx][1].label = status + label
