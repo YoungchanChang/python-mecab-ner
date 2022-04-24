@@ -65,6 +65,37 @@ def _get_mecab_feature(node) -> MecabWordFeature:
     return MecabWordFeature(node.surface, **feature)
 
 
+def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_compound=True):
+
+    if copy_compound_include_item.type == MecabParser.INFLECT:
+
+        if copy_compound_include_item.start_pos == copy_compound_include_item.pos:
+            exact_token = copy_compound_include_item.reading
+        else:
+            return exact_idx_string
+    else:
+        exact_token = word
+
+
+    index_string = exact_idx_string.find(exact_token)
+
+    len_pattern = len(exact_token)
+    if index_string != STRING_NOT_FOUND:
+        if change_compound:
+            copy_compound_include_item.begin = index_string
+            copy_compound_include_item.end = index_string + len_pattern
+        exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, index_string)
+        return exact_idx_string
+
+    if exact_idx_string.find(copy_compound_include_item.word) != STRING_NOT_FOUND: #하난데,에서 하나라도 일치하는가?
+        if change_compound:
+            copy_compound_include_item.begin = index_string
+            copy_compound_include_item.end = index_string + len_pattern
+        exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, 0)
+
+    return exact_idx_string
+
+
 class MecabParser:
 
     """
@@ -141,7 +172,7 @@ class MecabParser:
                     word, pos_tag, _ = compound_item.split("/")
                     compound_include_item.pos = pos_tag
 
-                    exact_idx_string = self.get_exact_idx(compound_include_item, exact_idx_string, word)
+                    exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
 
                     compound_include_item.word = word
                     copy_compound_include_item = copy.deepcopy(compound_include_item)
@@ -149,40 +180,12 @@ class MecabParser:
                     yield word, copy_compound_include_item
 
             else:
-                exact_idx_string = self.get_exact_idx(compound_include_item,
+                exact_idx_string = get_exact_idx(compound_include_item,
                                                       exact_idx_string, compound_include_item.word)
 
                 yield compound_include_item.word, compound_include_item
 
-    def get_exact_idx(self, copy_compound_include_item, exact_idx_string, word, change_compound=True):
 
-        if copy_compound_include_item.type == self.INFLECT:
-
-            if copy_compound_include_item.start_pos == copy_compound_include_item.pos:
-                exact_token = copy_compound_include_item.reading
-            else:
-                return exact_idx_string
-        else:
-            exact_token = word
-
-
-        index_string = exact_idx_string.find(exact_token)
-
-        len_pattern = len(exact_token)
-        if index_string != STRING_NOT_FOUND:
-            if change_compound:
-                copy_compound_include_item.begin = index_string
-                copy_compound_include_item.end = index_string + len_pattern
-            exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, index_string)
-            return exact_idx_string
-
-        if exact_idx_string.find(copy_compound_include_item.word) != STRING_NOT_FOUND: #하난데,에서 하나라도 일치하는가?
-            if change_compound:
-                copy_compound_include_item.begin = index_string
-                copy_compound_include_item.end = index_string + len_pattern
-            exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, 0)
-
-        return exact_idx_string
 
     def gen_mecab_compound_token_feature(self, sentence: str) -> Generator:
 
