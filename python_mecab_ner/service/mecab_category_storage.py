@@ -3,7 +3,7 @@ import re
 from collections import defaultdict, Counter, deque
 import copy
 
-from service.mecab_parser import MecabParser
+from service.mecab_parser import MecabParser, get_exact_idx
 from service.mecab_reader import get_ner_item_idx, get_ner_found_list
 from service.mecab_storage import MecabStorage
 
@@ -52,58 +52,63 @@ def get_only_entity(plain_mecab_result):
     #     filter_ne_list.append([(x[0], x[1].label, x[1].begin, x[1].end) for x in bio_each_item])
     return filter_ne_list
 
-def set_bi_tag(sentence, plain_mecab_result, ne_item, label, ne_begin=None, ne_end=None):
-    mecab_parser = MecabParser()
 
-    if ne_begin is None:
-        ne_begin = sentence.find(ne_item)
-        ne_end = sentence.find(ne_item) + len(ne_item)
+class CategorySave:
 
-    document_ne_items = ne_item.split()
+    def __init__(self):
+        self.mecab_parser = MecabParser()
 
-    for ne_idx, document_ne_item in enumerate(document_ne_items):
-        exact_idx_string = document_ne_item
+    def set_bi_tag(self, sentence, plain_mecab_result, ne_item, label, ne_begin=None, ne_end=None):
+        """ 문자열에서 bi 태그 정보 있을 시 해당 정보 세팅"""
+        if ne_begin is None: # 문자열 직접 검색해서 시작, 끝점 변경
+            ne_begin = sentence.find(ne_item)
+            ne_end = sentence.find(ne_item) + len(ne_item)
 
-        if ne_idx == 0:
-            status = "B-"
-        else:
-            status = "I-"
+        document_ne_items = ne_item.split() # 띄어쓰기가 있는 경우 처리
 
-        for plain_idx, plain_mecab_item in enumerate(plain_mecab_result):
-            plain_mecab_word, plain_mecab_feature = plain_mecab_item
+        for ne_idx, document_ne_item in enumerate(document_ne_items):
+            exact_idx_string = document_ne_item
 
-            if (exact_idx_string.startswith("*")): #물리학, 한 지점, 천문학잔데 - 잔데 # 하난데 - 하나 인데, 73, 110
+            if ne_idx == 0:
+                status = "B-"
+            else:
                 status = "I-"
 
-            exact_idx_string = exact_idx_string.replace("*", "")
-            if exact_idx_string == "":
-                break
+            for plain_idx, plain_mecab_item in enumerate(plain_mecab_result):
+                plain_mecab_word, plain_mecab_feature = plain_mecab_item
+                exact_idx_string = exact_idx_string.replace("*", "")
 
-            if plain_mecab_feature.label != "O":
-                continue
+                if (exact_idx_string.startswith("*")): #물리학, 한 지점, 천문학잔데 - 잔데 # 하난데 - 하나 인데, 73, 110
+                    status = "I-"
 
-            if ne_begin >= plain_mecab_feature.begin and ne_begin <= plain_mecab_feature.end:
-                exact_idx_string = get_exact_string(exact_idx_string, label, mecab_parser, plain_idx, plain_mecab_feature,
-                                                    plain_mecab_result,
-                                                    plain_mecab_word, status)
-            elif ne_end >= plain_mecab_feature.begin and ne_end <= plain_mecab_feature.end:
-                exact_idx_string = get_exact_string(exact_idx_string, label, mecab_parser, plain_idx, plain_mecab_feature,
-                                                    plain_mecab_result,
-                                                    plain_mecab_word, status)
-            elif plain_mecab_feature.begin >= ne_begin and plain_mecab_feature.end <= ne_end:
-                exact_idx_string = get_exact_string(exact_idx_string, label, mecab_parser, plain_idx,
-                                                    plain_mecab_feature, plain_mecab_result, plain_mecab_word, status)
+                if exact_idx_string == "":
+                    break
+
+                if plain_mecab_feature.label != "O": # 이미 세팅된 문자 백트래킹
+                    continue
+
+                if ne_begin >= plain_mecab_feature.begin and ne_begin <= plain_mecab_feature.end:
+                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature,
+                                                        plain_mecab_result,
+                                                        plain_mecab_word, status)
+                elif ne_end >= plain_mecab_feature.begin and ne_end <= plain_mecab_feature.end:
+                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature,
+                                                        plain_mecab_result,
+                                                        plain_mecab_word, status)
+                elif plain_mecab_feature.begin >= ne_begin and plain_mecab_feature.end <= ne_end:
+                    exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx,
+                                                        plain_mecab_feature, plain_mecab_result, plain_mecab_word, status)
 
 
-def get_exact_string(exact_idx_string, label, mecab_parser, plain_idx, plain_mecab_feature, plain_mecab_result,
-                     plain_mecab_word, status):
-    exact_idx_string_return = mecab_parser.get_exact_idx(plain_mecab_feature, exact_idx_string,
-                                                         plain_mecab_feature.word, change_compound=False)
-    if exact_idx_string != exact_idx_string_return or len(plain_mecab_word) == 1:  # 바뀐 값이 있거나, ㄹ같이 받침인 경우
-        exact_idx_string = exact_idx_string_return
-        plain_mecab_result[plain_idx][1].label = status + label
+    def get_exact_string(self, exact_idx_string, label, plain_idx, plain_mecab_feature, plain_mecab_result, plain_mecab_word, status):
+        """받침 있거나, 복합어이어서 문자열 찾지 못한 경우"""
+        exact_idx_string_return = get_exact_idx(plain_mecab_feature, exact_idx_string,
+                                                             plain_mecab_feature.word, change_compound=False)
+        if exact_idx_string != exact_idx_string_return or len(plain_mecab_word) == 1:  # 바뀐 값이 있거나, ㄹ같이 받침인 경우
+            exact_idx_string = exact_idx_string_return
+            plain_mecab_result[plain_idx][1].label = status + label
+            return exact_idx_string
         return exact_idx_string
-    return exact_idx_string
 
 
 def set_cat_dict(ner_text, category_dictionary, entity=True):
