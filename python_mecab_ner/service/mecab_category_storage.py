@@ -34,6 +34,19 @@ def concat_tokens(bio_each_item, input_idx):
             input_idx = bio_input_item[1].end
 
 
+def get_pos_seq_category(mecab_token_storage):
+    pos_seq_category = defaultdict(list)
+
+    for mecab_token_range in mecab_token_storage.items():
+        label, label_storage = mecab_token_range
+        for label_pos_seq in label_storage.core_key_word.keys():
+            pos_seq_category[label_pos_seq].append(label)
+
+    pos_seq_category = sorted(pos_seq_category.items(), key=lambda item: len(item[0]), reverse=True)
+    return pos_seq_category
+
+
+
 def get_only_entity(plain_mecab_result):
     mecab_storage = MecabStorage()
     bio_all_list = []
