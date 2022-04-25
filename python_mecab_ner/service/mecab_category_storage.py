@@ -182,7 +182,7 @@ class CategorySave:
             # Level 1 : label - pos - last token
             token_last_core_val = mecab_core_info[-1]
             pos_seq = "+".join([x[1] for x in mecab_core_info])
-            mecab_token_storage[label].core_key_word[pos_seq].add(token_last_core_val)
+            mecab_token_storage[label].core_key_word[pos_seq][(token_last_core_val[0], token_last_core_val[1])] = 1
 
             # Level 2 : label - pos - if token allow put data
             core_pos_words = [(x[0], x[1]) for x in mecab_core_info if x[1] in core_pos]
