@@ -15,7 +15,7 @@ class Category:
 
 class MecabTokenStorage:
     def __init__(self):
-        self.core_key_word = defaultdict(set)
+        self.core_key_word = defaultdict(dict)
         self.core_pos_word = Counter() # core pos에 반드시 들어가야 하는 단어.
         self.neighbor_word = Counter() # 가능한 pos 범위만 저장한다. ("가", "XPN")
 
