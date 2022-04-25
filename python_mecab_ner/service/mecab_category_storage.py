@@ -3,6 +3,7 @@ import re
 from collections import defaultdict, Counter, deque
 import copy
 
+from domain.mecab_domain import core_pos, neighbor_pos
 from service.mecab_parser import MecabParser, get_exact_idx, delete_pattern_from_string, \
     subs_str_finder
 from service.mecab_reader import get_ner_item_idx, get_ner_found_list
@@ -18,6 +19,7 @@ STRICT_CORE = 0
 LOOSE_CORE = 1
 PART_INFER = 2
 BRUTE_INFER = 3
+NEIGHBOR_DISTANCE = 4
 
 
 def concat_tokens(bio_each_item, input_idx):
@@ -71,7 +73,6 @@ def get_only_entity(plain_mecab_result):
     return filter_ne_list
 
 
-
 class CategorySave:
 
     def __init__(self, sentence: str):
@@ -121,8 +122,6 @@ class CategorySave:
 
                 elif plain_mecab_feature.begin >= ne_begin and plain_mecab_feature.end <= ne_end:
                     exact_idx_string = self.get_exact_string(exact_idx_string, label, plain_idx, plain_mecab_feature, status)
-
-
 
     def get_exact_string(self, exact_idx_string, label, plain_idx, plain_mecab_feature, status):
         """받침 있거나, 복합어이어서 문자열 찾지 못한 경우"""
@@ -174,6 +173,29 @@ class CategorySave:
             self.mecab_parse_tokens[plain_idx][1].label = status + label
             self.token_info.append(self.mecab_parse_tokens[plain_idx])
         return exact_idx_string
+
+    def set_mecab_token_storage(self, mecab_token_storage, token_all_info):
+        for mecab_token_items in token_all_info:
+            label, mecab_items = mecab_token_items
+            mecab_core_info = [(x[0], x[1].pos, x[1].mecab_compound) for x in mecab_items]
+
+            # Level 1 : label - pos - last token
+            token_last_core_val = mecab_core_info[-1]
+            pos_seq = "+".join([x[1] for x in mecab_core_info])
+            mecab_token_storage[label].core_key_word[pos_seq].add(token_last_core_val)
+
+            # Level 2 : label - pos - if token allow put data
+            core_pos_words = [(x[0], x[1]) for x in mecab_core_info if x[1] in core_pos]
+            mecab_token_storage[label].core_pos_word += Counter(core_pos_words)
+
+            # Level 3 : pos - near all data if token allow
+            neighbor_list = []
+            for i in range(max(0, token_last_core_val[2] - NEIGHBOR_DISTANCE),
+                           min(len(self.mecab_parse_tokens), token_last_core_val[2] + NEIGHBOR_DISTANCE), 1):
+                neighbor_token = self.mecab_parse_tokens[i][1]
+                if neighbor_token.pos in neighbor_pos:
+                    neighbor_list.append((neighbor_token.pos, neighbor_token.word))
+            mecab_token_storage[label].neighbor_word += Counter(neighbor_list)
 
 def jamo_contains(small, big):
     # 정보의 순서가 중요할 때 사용
