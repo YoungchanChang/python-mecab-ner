@@ -78,9 +78,13 @@ class CategorySave:
         self.sentence = sentence
         self.mecab_parser = MecabParser(sentence=sentence)
         self.mecab_parse_tokens = list(self.mecab_parser.gen_mecab_compound_token_feature())
+        self.token_info = []
 
     def set_bi_tag(self, ne_item, label, ne_begin=None, ne_end=None):
         """ 문자열에서 bi 태그 정보 있을 시 해당 정보 세팅"""
+
+        self.token_info = []
+
         if ne_begin is None: # 문자열 직접 검색해서 시작, 끝점 변경
             ne_begin = self.sentence.find(ne_item)
             ne_end = self.sentence.find(ne_item) + len(ne_item)
@@ -130,6 +134,7 @@ class CategorySave:
             if exact_idx_string != exact_idx_string_return:  # 바뀐 값이 있거나, ㄹ같이 받침인 경우
                 exact_idx_string = exact_idx_string_return
                 self.mecab_parse_tokens[plain_idx][1].label = status + label
+                self.token_info.append(self.mecab_parse_tokens[plain_idx])
                 return exact_idx_string
 
         # 1. word 단위로 찾는다. 2. 자모 단위로 찾는다.
@@ -142,6 +147,7 @@ class CategorySave:
 
         if len(reading_jaso) == 1: # ㄹ같이 받침으로 된 경우
             self.mecab_parse_tokens[plain_idx][1].label = status + label  # 라벨 변경
+            self.token_info.append(self.mecab_parse_tokens[plain_idx])
             return exact_idx_string
 
         jaso_contain_idx = jamo_contains(reading_jaso, token_jaso)
@@ -152,6 +158,7 @@ class CategorySave:
                 get_original_jamo = join_jamos(token_jaso)
                 self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo
                 self.mecab_parse_tokens[plain_idx][1].label = status + label
+                self.token_info.append(self.mecab_parse_tokens[plain_idx])
                 return ""
 
         if jaso_contain_idx: # "해설사"가 찾고자 하는 글자이고 하 애 설사 로 있을 때
@@ -160,10 +167,12 @@ class CategorySave:
             exact_idx_string_return = join_jamos(exact_idx_string_return)
             self.mecab_parse_tokens[plain_idx][1].word = get_original_jamo # 일치하는 글자로 변경
             self.mecab_parse_tokens[plain_idx][1].label = status + label # 라벨 변경
+            self.token_info.append(self.mecab_parse_tokens[plain_idx])
 
             return exact_idx_string_return.replace(NO_JONGSUNG, "")
         if "EF" not in str(plain_mecab_feature.expression) or len(read_item) == 1:
             self.mecab_parse_tokens[plain_idx][1].label = status + label
+            self.token_info.append(self.mecab_parse_tokens[plain_idx])
         return exact_idx_string
 
 def jamo_contains(small, big):
@@ -175,18 +184,22 @@ def jamo_contains(small, big):
         else:
             return i, i + len(small)
     return False
+
+
+
 def set_cat_dict(ner_text, category_dictionary, entity=True):
     DUPLICATE_DISTANCE = 2
-    mecab_parser = MecabParser()
 
     regex_expression = r"<([^:]+):([\d\w]+)>"
+    # 문자열, 라벨
     ner_target_list = re.findall(regex_expression, ner_text)
 
     plain_text = re.sub(regex_expression, r"\g<1>", ner_text)
 
     nert_item_idx = get_ner_item_idx(ner_text, ner_target_list)
+    mecab_parser = MecabParser(sentence=plain_text)
 
-    plain_mecab_result = list(mecab_parser.gen_mecab_compound_token_feature(plain_text))
+    plain_mecab_result = list(mecab_parser.gen_mecab_compound_token_feature())
 
     ner_found_list = get_ner_found_list(nert_item_idx, plain_mecab_result)
 
