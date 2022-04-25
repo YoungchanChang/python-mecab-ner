@@ -2,10 +2,22 @@ from dataclasses import dataclass
 from typing import Optional
 from collections import defaultdict, Counter
 
+core_pos = ["NNG", "NNP", "VV", "VA"]
+neighbor_pos = core_pos + ["NNBC", "MM", "MAG", "XPN", "XSN", "XSV", "XSA", "XR"]
+
+
 @dataclass
 class Category:
     large: str
     small: str
+
+
+
+class MecabTokenStorage:
+    def __init__(self):
+        self.core_key_word = defaultdict(set)
+        self.core_pos_word = Counter() # core pos에 반드시 들어가야 하는 단어.
+        self.neighbor_word = Counter() # 가능한 pos 범위만 저장한다. ("가", "XPN")
 
 
 class CategorySaveStorage:
