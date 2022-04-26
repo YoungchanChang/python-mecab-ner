@@ -6,6 +6,10 @@ core_noun = ["NNG", "NNP"]
 core_pos = core_noun + ["VV", "VA"]
 neighbor_pos = core_pos + ["NNBC", "MM", "MAG", "XPN", "XSN", "XSV", "XSA", "XR"]
 
+single_possible_token = core_noun + ['SL']
+entity_last_pos = single_possible_token + ["NNB","NNBC","NR","NP","VV","VA","MM","MAG","IC", "ETN","ETM","XPN","XSN","XR","SY","SH","SN",]
+forbidden_words = ['’']
+
 
 @dataclass
 class Category:
