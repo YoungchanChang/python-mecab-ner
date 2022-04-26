@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from domain.mecab_domain import MecabTokenStorage
-from service.mecab_category_storage import CategorySave, get_only_entity
+from service.mecab_category_storage import CategorySave, get_only_entity, get_bio_mecab_results
 
 
 def test_set_bio_category():
@@ -86,3 +86,23 @@ def test_set_bio_category():
     category_save.set_mecab_token_storage(mecab_token_storage, token_all_info)
 
     assert mecab_token_storage['PS_NAME'].core_pos_word.most_common()[0] == (('훙레이', 'NNP'), 1)
+
+
+def test_duplicate_filter():
+    mecab_token_storage = defaultdict(MecabTokenStorage)
+    sample = ['food,좋은 차를 마셨어,좋은 차', 'product,좋은 차를 몰았어,좋은 차']
+    for sample_item in sample:
+        token_all_info = []
+        label, sentence, q = sample_item.split(",")
+        ne_label = label
+        category_save = CategorySave(sentence=sentence)
+        category_save.set_bi_tag(q, ne_label)
+        token_all_info.append((ne_label, category_save.token_info))
+
+        category_save.set_mecab_token_storage(mecab_token_storage, token_all_info)
+
+    sentence = "좋은 차를 마셨어"
+    mecab_token_from_dictionary = get_bio_mecab_results(mecab_token_storage, sentence)
+    mecab_answer = [(x[0], x[1].label) for x in mecab_token_from_dictionary if x[1].label != "O"]
+
+    assert mecab_answer == [('좋', 'B-food'), ('은', 'I-food'), ('차', 'I-food')]
