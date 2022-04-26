@@ -3,12 +3,12 @@ import re
 from collections import defaultdict, Counter, deque
 import copy
 
-from domain.mecab_domain import core_pos, neighbor_pos
-from service.mecab_parser import MecabParser, get_exact_idx, delete_pattern_from_string, \
-    subs_str_finder
+from domain.mecab_domain import core_pos, neighbor_pos, core_noun
+from service.mecab_parser import MecabParser, get_exact_idx, delete_pattern_from_string
 from service.mecab_reader import get_ner_item_idx, get_ner_found_list
 from service.mecab_storage import MecabStorage
 from service.unicode import *
+from service.unicode import EMPTY, CHECK
 
 entity_last_pos = ["NNG","NNP","NNB","NNBC","NR","NP","VV","VA","MM","MAG","IC","JKG","JKB","JKV","JKQ","JX","JC","ETN","ETM","XPN","XSN","XSV","XSA","XR","SY", "SL","SH","SN",]
 intent_last_pos = ["VV", "VA", "XSV", "XSA", "IC", "EP", "EF", "EC",]
@@ -20,7 +20,7 @@ LOOSE_CORE = 1
 PART_INFER = 2
 BRUTE_INFER = 3
 NEIGHBOR_DISTANCE = 4
-
+LEAST_NOUN_FOUND = 1
 
 def concat_tokens(bio_each_item, input_idx):
     concat_tokens = ""
@@ -33,6 +33,51 @@ def concat_tokens(bio_each_item, input_idx):
             concat_tokens += bio_input_item[0]
             input_idx = bio_input_item[1].end
 
+
+def get_bio_mecab_results(mecab_token_storage, sentence):
+    """검색 문자열로부터 메캅 형태소 엔티티 검색 결과 반환"""
+    pos_seq_category = get_pos_seq_category(mecab_token_storage)
+    mecab_search_token = list(MecabParser(sentence=sentence).gen_mecab_compound_token_feature())
+    mecab_parse_token = copy.deepcopy(mecab_search_token)
+    for pos_seq_key, pos_allow_category in pos_seq_category:  # 모든 형태소 키값에 대해서 검사 수행
+        i_split = pos_seq_key.split("+")
+        pos_seq_contain_list = contains(i_split, mecab_search_token)
+
+        for pos_seq_range in pos_seq_contain_list:  # 형태소 키값의 범위에 대해 수행, 여러개 매칭 가능
+            token_end = pos_seq_range[1]
+            token_begin = pos_seq_range[0]
+            for pos_category_item in pos_allow_category:  # 허용된 카테고리만큼 loop
+                data_category_item = mecab_token_storage[pos_category_item].core_key_word[pos_seq_key]
+
+                token_core_val = mecab_search_token[pos_seq_range[1] - 1]
+
+                data_find = data_category_item.get((token_core_val[1].word, token_core_val[1].pos), None)
+
+                if data_find:
+                    # Level 1 - find core word
+                    cnt = 0
+                    for i in range(token_end - 1, token_begin, -1):
+                        if mecab_search_token[i][1].pos in core_noun and (cnt > LEAST_NOUN_FOUND):  # NNG 검색 최소 횟수
+                            noun_item = mecab_token_storage[pos_category_item].core_pos_word.get(
+                                (mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), None)
+
+                            if noun_item is None:
+                                break
+                            cnt += 1
+
+                    else:
+
+                        for i in range(pos_seq_range[0], pos_seq_range[1], 1):
+
+                            if i == pos_seq_range[0]:
+                                stat = "B-"
+                            else:
+                                stat = "I-"
+
+                            mecab_parse_token[i][1].label = stat + pos_category_item
+                            mecab_search_token[i][1].word = EMPTY
+                            mecab_search_token[i][1].pos = CHECK
+    return mecab_parse_token
 
 def get_pos_seq_category(mecab_token_storage):
     """ 형태소 순서를 위한 검색 필드 추가 ex) NNG+NNG+NNG"""
