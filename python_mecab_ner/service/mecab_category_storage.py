@@ -190,7 +190,7 @@ class CategorySave:
     def set_mecab_token_storage(self, mecab_token_storage, token_all_info):
         for mecab_token_items in token_all_info:
             label, mecab_items = mecab_token_items
-            mecab_core_info = [(x[0], x[1].pos, x[1].mecab_compound) for x in mecab_items]
+            mecab_core_info = [(x[1].word, x[1].pos, x[1].mecab_compound) for x in mecab_items]
 
             # Level 1 : label - pos - last token
             token_last_core_val = mecab_core_info[-1]
