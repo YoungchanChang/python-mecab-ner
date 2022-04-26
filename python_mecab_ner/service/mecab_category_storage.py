@@ -3,7 +3,7 @@ import re
 from collections import defaultdict, Counter, deque
 import copy
 
-from domain.mecab_domain import core_pos, neighbor_pos, core_noun
+from domain.mecab_domain import core_pos, neighbor_pos, core_noun, single_possible_token, forbidden_words
 from service.mecab_parser import MecabParser, get_exact_idx, delete_pattern_from_string
 from service.mecab_reader import get_ner_item_idx, get_ner_found_list
 from service.mecab_storage import MecabStorage
@@ -19,7 +19,7 @@ STRICT_CORE = 0
 LOOSE_CORE = 1
 PART_INFER = 2
 BRUTE_INFER = 3
-NEIGHBOR_DISTANCE = 4
+NEIGHBOR_DISTANCE = 3
 LEAST_NOUN_FOUND = 1
 
 
@@ -49,6 +49,8 @@ def delete_duplicate_value(entity_list, mecab_parse_token, mecab_token_storage):
 
                 for i in range(max(0, duplicate_item[1][1].mecab_compound - NEIGHBOR_DISTANCE),
                                min(len(mecab_parse_token), duplicate_item[1][1].mecab_compound + NEIGHBOR_DISTANCE), 1):
+                    if i == duplicate_item[1][1].mecab_compound:
+                        continue
                     score += math.log(mecab_token_storage[duplicate_item[0]].neighbor_word.get((mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), 0) + 1)
                 if score > max_score:
                     max_score = score
@@ -83,9 +85,20 @@ def get_bio_mecab_results(mecab_token_storage, sentence):
 
                 if data_find:
                     # Level 1 - find core word
+                    # 토큰 하나일 때는 반드시 근처에 본 단어가 있어야 한다.
+                    if len(i_split) == 1:
+                        found_token = 0
+                        for i in range(max(0, token_begin - NEIGHBOR_DISTANCE), min(len(mecab_parse_token), token_end + NEIGHBOR_DISTANCE), 1):
+                            found_token += mecab_token_storage[pos_category_item].neighbor_word.get(
+                                (mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), 0)
+                        if found_token > 2:
+                            entity_list.append(
+                                (pos_category_item, token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
+
+                    # 토큰이 여러개일때는 NNG, NNP중 하나를 반드시 봐야 한다.
                     cnt = 0
                     for i in range(token_end - 1, token_begin, -1):
-                        if mecab_search_token[i][1].pos in core_noun:  # NNG 검색 최소 횟수
+                        if mecab_search_token[i][1].pos in core_pos:  # NNG 검색 최소 횟수
                             noun_item = mecab_token_storage[pos_category_item].core_pos_word.get(
                                 (mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), None)
 
@@ -93,7 +106,38 @@ def get_bio_mecab_results(mecab_token_storage, sentence):
                                 break
                             cnt += 1
                     else:
-                        entity_list.append((pos_category_item, token_core_val, mecab_search_token[pos_seq_range[0]:pos_seq_range[1]]))
+                        entity_list.append((pos_category_item, token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
+
+
+                # else:
+                #     data_find = mecab_token_storage[pos_category_item].core_pos_word.get((token_core_val[1].word, token_core_val[1].pos), None)
+                #     if data_find:
+                #         for i in range(token_begin, token_end,1):
+                #             if mecab_search_token[i][1].pos in core_pos:
+                #                 noun_item = mecab_token_storage[pos_category_item].core_pos_word.get(
+                #                     (mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), None)
+                #
+                #                 if noun_item is None:
+                #                     break
+                #         else:
+                #             entity_list.append((pos_category_item, token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
+
+                    # if len(i_split) == 1:
+                    #     if token_core_val[1].semantic == "지명":
+                    #         entity_list.append(("OGG", token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
+                    #     elif token_core_val[1].semantic == "장소":
+                    #         entity_list.append(("LOC", token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
+                    #     elif token_core_val[1].semantic == "인명":
+                    #         entity_list.append(("PS", token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
+                # elif len(i_split) > 1: # 한 번도 본 단어가 없을 때
+                #     found_token = 0
+                #     for i in range(max(0, token_begin - 3),
+                #                    min(len(mecab_parse_token), token_end + 3), 1):
+                #         found_token += mecab_token_storage[pos_category_item].core_pos_word.get(
+                #             (mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), 0)
+                #     if found_token >= 10:
+                #         entity_list.append((pos_category_item, token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
+                #
 
         # 중의어 제거 로직
         entity_list = delete_duplicate_value(entity_list, mecab_parse_token, mecab_token_storage)
@@ -279,6 +323,12 @@ class CategorySave:
             # Level 1 : label - pos - last token
             token_last_core_val = mecab_core_info[-1]
             pos_seq = "+".join([x[1] for x in mecab_core_info])
+
+            if token_last_core_val[0] in forbidden_words:
+                continue
+            # if len(mecab_core_info) == 1 and (pos_seq in single_possible_token):
+            #     mecab_token_storage[label].core_key_word[pos_seq][(token_last_core_val[0], token_last_core_val[1])] = 1
+            # elif token_last_core_val[1] in entity_last_pos:
             mecab_token_storage[label].core_key_word[pos_seq][(token_last_core_val[0], token_last_core_val[1])] = 1
 
             # Level 2 : label - pos - if token allow put data
