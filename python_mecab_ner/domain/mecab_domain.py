@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import Optional
 from collections import defaultdict, Counter
 
-core_pos = ["NNG", "NNP", "VV", "VA"]
+core_noun = ["NNG", "NNP"]
+core_pos = core_noun + ["VV", "VA"]
 neighbor_pos = core_pos + ["NNBC", "MM", "MAG", "XPN", "XSN", "XSV", "XSA", "XR"]
 
 
