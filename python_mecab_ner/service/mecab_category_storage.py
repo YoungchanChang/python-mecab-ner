@@ -35,6 +35,7 @@ def concat_tokens(bio_each_item, input_idx):
 
 
 def get_pos_seq_category(mecab_token_storage):
+    """ 형태소 순서를 위한 검색 필드 추가 ex) NNG+NNG+NNG"""
     pos_seq_category = defaultdict(list)
 
     for mecab_token_range in mecab_token_storage.items():
