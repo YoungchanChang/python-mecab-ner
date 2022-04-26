@@ -98,20 +98,23 @@ def get_bio_mecab_results(mecab_token_storage, sentence):
         # 중의어 제거 로직
         entity_list = delete_duplicate_value(entity_list, mecab_parse_token, mecab_token_storage)
 
-        for entity_item in entity_list:
-            for i in range(entity_item[2][0][1].mecab_compound, entity_item[2][-1][1].mecab_compound+1, 1):
-
-                if i == entity_item[2][0][1].mecab_compound:
-                    stat = "B-"
-                else:
-                    stat = "I-"
-
-                mecab_parse_token[i][1].label = stat + entity_item[0]
-                mecab_search_token[i][1].word = EMPTY
-                mecab_search_token[i][1].pos = CHECK
+        set_mecab_label(entity_list, mecab_parse_token, mecab_search_token)
     return mecab_parse_token
 
 
+def set_mecab_label(entity_list, mecab_parse_token, mecab_search_token):
+    """ 메캅에 형태소 값에 따른 태그 부착 """
+    for entity_item in entity_list:
+        for i in range(entity_item[2][0][1].mecab_compound, entity_item[2][-1][1].mecab_compound + 1, 1):
+
+            if i == entity_item[2][0][1].mecab_compound:
+                stat = "B-"
+            else:
+                stat = "I-"
+
+            mecab_parse_token[i][1].label = stat + entity_item[0]
+            mecab_search_token[i][1].word = EMPTY
+            mecab_search_token[i][1].pos = CHECK
 
 
 def get_pos_seq_category(mecab_token_storage):
