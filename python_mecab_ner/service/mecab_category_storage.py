@@ -39,6 +39,7 @@ def get_bio_mecab_results(mecab_token_storage, sentence):
     pos_seq_category = get_pos_seq_category(mecab_token_storage)
     mecab_search_token = list(MecabParser(sentence=sentence).gen_mecab_compound_token_feature())
     mecab_parse_token = copy.deepcopy(mecab_search_token)
+    answer = []
     for pos_seq_key, pos_allow_category in pos_seq_category:  # 모든 형태소 키값에 대해서 검사 수행
         i_split = pos_seq_key.split("+")
         pos_seq_contain_list = contains(i_split, mecab_search_token)
@@ -64,8 +65,9 @@ def get_bio_mecab_results(mecab_token_storage, sentence):
                             if noun_item is None:
                                 break
                             cnt += 1
-
                     else:
+                        zzz = mecab_search_token[pos_seq_range[0]:pos_seq_range[1]]
+                        answer.append(zzz)
 
                         for i in range(pos_seq_range[0], pos_seq_range[1], 1):
 
