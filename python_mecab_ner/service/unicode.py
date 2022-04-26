@@ -4,6 +4,9 @@
 
 import itertools
 
+EMPTY = 'ᴕ'
+CHECK = "CK"
+
 INITIAL = 0x001
 MEDIAL = 0x010
 FINAL = 0x100
