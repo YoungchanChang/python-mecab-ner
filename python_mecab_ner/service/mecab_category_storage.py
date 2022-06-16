@@ -3,14 +3,15 @@ import re
 from collections import defaultdict, Counter, deque
 import copy
 
-from domain.mecab_domain import core_pos, neighbor_pos, core_noun, single_possible_token, forbidden_words
+from domain.mecab_domain import core_pos, neighbor_pos, core_noun, single_possible_token, forbidden_words, \
+    entity_last_pos
 from service.mecab_parser import MecabParser, get_exact_idx, delete_pattern_from_string
 from service.mecab_reader import get_ner_item_idx, get_ner_found_list
 from service.mecab_storage import MecabStorage
 from service.unicode import *
 from service.unicode import EMPTY, CHECK
 
-entity_last_pos = ["NNG","NNP","NNB","NNBC","NR","NP","VV","VA","MM","MAG","IC","JKG","JKB","JKV","JKQ","JX","JC","ETN","ETM","XPN","XSN","XSV","XSA","XR","SY", "SL","SH","SN",]
+
 intent_last_pos = ["VV", "VA", "XSV", "XSA", "IC", "EP", "EF", "EC",]
 duplicate_pos = ["NNG","NNP", "VV", "VA"]
 
@@ -86,27 +87,34 @@ def get_bio_mecab_results(mecab_token_storage, sentence):
                 if data_find:
                     # Level 1 - find core word
                     # 토큰 하나일 때는 반드시 근처에 본 단어가 있어야 한다.
-                    if len(i_split) == 1:
+
+                    if pos_category_item.startswith('PS') or pos_category_item.startswith('OGG'):
                         found_token = 0
-                        for i in range(max(0, token_begin - NEIGHBOR_DISTANCE), min(len(mecab_parse_token), token_end + NEIGHBOR_DISTANCE), 1):
+                        for i in range(max(0,token_begin - NEIGHBOR_DISTANCE), min(len(mecab_parse_token), token_end + NEIGHBOR_DISTANCE), 1):
+                            # if i == duplicate_item[1][1].mecab_compound:
+                            #     continue
                             found_token += mecab_token_storage[pos_category_item].neighbor_word.get(
                                 (mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), 0)
                         if found_token > 2:
                             entity_list.append(
                                 (pos_category_item, token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
+                        # for i in range(max(0, token_begin - NEIGHBOR_DISTANCE), min(len(mecab_parse_token), token_end + NEIGHBOR_DISTANCE), 1):
+                        #     found_token += mecab_token_storage[pos_category_item].neighbor_word.get(
+                        #         (mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), 0)
 
-                    # 토큰이 여러개일때는 NNG, NNP중 하나를 반드시 봐야 한다.
-                    cnt = 0
-                    for i in range(token_end - 1, token_begin, -1):
-                        if mecab_search_token[i][1].pos in core_pos:  # NNG 검색 최소 횟수
-                            noun_item = mecab_token_storage[pos_category_item].core_pos_word.get(
-                                (mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), None)
-
-                            if noun_item is None:
-                                break
-                            cnt += 1
                     else:
-                        entity_list.append((pos_category_item, token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
+                        # 토큰이 여러개일때는 NNG, NNP중 하나를 반드시 봐야 한다.
+                        cnt = 0
+                        for i in range(token_end - 1, token_begin, -1):
+                            if mecab_search_token[i][1].pos in core_pos:  # NNG 검색 최소 횟수
+                                noun_item = mecab_token_storage[pos_category_item].core_pos_word[pos_seq_key].get(
+                                    (mecab_parse_token[i][1].word, mecab_parse_token[i][1].pos), None)
+
+                                if noun_item is None:
+                                    break
+                                cnt += 1
+                        else:
+                            entity_list.append((pos_category_item, token_core_val, mecab_parse_token[pos_seq_range[0]:pos_seq_range[1]]))
 
 
                 # else:
@@ -328,12 +336,13 @@ class CategorySave:
                 continue
             # if len(mecab_core_info) == 1 and (pos_seq in single_possible_token):
             #     mecab_token_storage[label].core_key_word[pos_seq][(token_last_core_val[0], token_last_core_val[1])] = 1
-            # elif token_last_core_val[1] in entity_last_pos:
-            mecab_token_storage[label].core_key_word[pos_seq][(token_last_core_val[0], token_last_core_val[1])] = 1
+            if token_last_core_val[1] in entity_last_pos:
+                mecab_token_storage[label].core_key_word[pos_seq] += Counter([(token_last_core_val[0], token_last_core_val[1])])
 
             # Level 2 : label - pos - if token allow put data
+            # 어느 시퀀스에 있는 단어인지 저장한다.
             core_pos_words = [(x[0], x[1]) for x in mecab_core_info if x[1] in core_pos]
-            mecab_token_storage[label].core_pos_word += Counter(core_pos_words)
+            mecab_token_storage[label].core_pos_word[pos_seq] += Counter((token_last_core_val[0], token_last_core_val[1]))
 
             # Level 3 : pos - near all data if token allow
             neighbor_list = []

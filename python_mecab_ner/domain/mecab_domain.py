@@ -4,10 +4,10 @@ from collections import defaultdict, Counter
 
 core_noun = ["NNG", "NNP"]
 core_pos = core_noun + ["VV", "VA"]
-neighbor_pos = core_pos + ["NNBC", "MM", "MAG", "XPN", "XSN", "XSV", "XSA", "XR"]
+neighbor_pos = ["NNG","NNP","NNB","NNBC","NR","NP","VV","VA","VX","VCP","VCN","MM","MAG","MAJ","IC","JKS","JKC","JKG","JKO","JKB","JKV","JKQ","JX","JC","EP","EF","EC","ETN","ETM","XPN","XSN","XSV","XSA","XR","SF","SE","SSO","SSC","SC","SY","SL","SH","SN"]
 
 single_possible_token = core_noun + ['SL']
-entity_last_pos = single_possible_token + ["NNB","NNBC","NR","NP","VV","VA","MM","MAG","IC", "ETN","ETM","XPN","XSN","XR","SY","SH","SN",]
+entity_last_pos = single_possible_token + ["NNB","NNBC","NR","NP","VV","VA","ETN","ETM","XSN","XR","SH","SN",]
 forbidden_words = ['’']
 
 
@@ -20,8 +20,8 @@ class Category:
 
 class MecabTokenStorage:
     def __init__(self):
-        self.core_key_word = defaultdict(dict)
-        self.core_pos_word = Counter() # core pos에 반드시 들어가야 하는 단어.
+        self.core_key_word = defaultdict(Counter)
+        self.core_pos_word = defaultdict(Counter) # core pos에 반드시 들어가야 하는 단어.
         self.neighbor_word = Counter() # 가능한 pos 범위만 저장한다. ("가", "XPN")
 
 

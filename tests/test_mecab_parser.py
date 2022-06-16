@@ -127,8 +127,9 @@ def test_mecab_storage(mock_mecab_parser_sentence):
     """
     토큰화된 단어 원문으로 복구하는 기능
     """
-    mecab_parser = MecabParser()
-    test_mecab_list = list(mecab_parser.gen_mecab_compound_token_feature('그러니까 전철역이 그게 뭐 어쩌고 저쩟다는 거지'))
+    test_sentence = '그러니까 전철역이 그게 뭐 어쩌고 저쩟다는 거지'
+    mecab_parser = MecabParser(test_sentence)
+    test_mecab_list = list(mecab_parser.gen_mecab_compound_token_feature())
 
     test_mecab_sentence = " ".join([x[0] for x in test_mecab_list])
     assert test_mecab_sentence == '그러니까 전철 역 이 그것 이 뭐 어쩌 고 저 쩟 다는 거 이 지'
