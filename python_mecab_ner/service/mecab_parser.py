@@ -7,36 +7,7 @@ from typing import Generator
 from mecab import MeCabError
 from python_mecab_ner.domain.mecab_domain import MecabWordFeature
 from service.unicode import *
-
-
-def subs_str_finder(control_s, sub_str):
-    """
-    Finds indexes of all sub_str occurences in control_s.
-    """
-    sub_len = len(sub_str)
-
-    while sub_str in control_s:
-        first_index = control_s.find(sub_str)
-        second_index = first_index + sub_len
-        return first_index, second_index
-
-def delete_pattern_from_string(string, pattern, index, nofail=False):
-    """ 문자열에서 패턴을 찾아서 *로 변환해주는 기능 """
-
-    # raise an error if index is outside of the string
-    if not nofail and index not in range(len(string)):
-        raise ValueError("index outside given string")
-
-    # if not erroring, but the index is still not in the correct range..
-    if index < 0:  # add it to the beginning
-        return pattern + string
-    if index > len(string):  # add it to the end
-        return string + pattern
-
-    len_pattern = len(pattern)
-    blank_pattern = len(pattern) * "*"
-    # insert the new string between "slices" of the original
-    return string[:index] + blank_pattern + string[index + len_pattern:]
+from service.string_utility import *
 
 STRING_NOT_FOUND = -1
 
@@ -77,8 +48,16 @@ def _get_mecab_feature(node) -> MecabWordFeature:
     return MecabWordFeature(node.surface, **feature)
 
 
-def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_compound=True):
+def get_exact_idx(mecab_word_feature_item, exact_idx_string, word, change_compound=True):
 
+    """
+    형태소 분석 문자가 문자열에서 정확히 어떤 인덱스에 위치하는지 반환
+    :param mecab_word_feature_item: 형태소 분석 문자
+    :param exact_idx_string: 문자열
+    :param word: 찾고자 하는 단어
+    :param change_compound: 복합어 여부
+    :return: 인덱스 위치
+    """
 
     exact_token = word
 
@@ -87,8 +66,8 @@ def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_com
     len_pattern = len(exact_token)
     if index_string != STRING_NOT_FOUND:
         if change_compound:
-            copy_compound_include_item.begin = index_string
-            copy_compound_include_item.end = index_string + len_pattern
+            mecab_word_feature_item.begin = index_string
+            mecab_word_feature_item.end = index_string + len_pattern
         exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, index_string)
         return exact_idx_string
 
@@ -98,6 +77,7 @@ def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_com
 
     if len(jaso_exact_token) == 1:  # ㄹ같이 받침으로 된 경우
         return exact_idx_string
+
     jamo_first_range = subs_str_finder(jaso_exact_idx_string, jaso_exact_token)
 
     if jamo_first_range:
@@ -105,16 +85,11 @@ def get_exact_idx(copy_compound_include_item, exact_idx_string, word, change_com
         exact_idx_string_return = join_jamos(jaso_exact_idx_string)
         begin = jamo_first_range[0]
         end = begin + len(get_original_jamo)
-        exact_idx_string_return = exact_idx_string_return[0:begin] + "*"*len(get_original_jamo) + exact_idx_string_return[end:]
-        copy_compound_include_item.begin = jamo_first_range[0]
-        copy_compound_include_item.end = jamo_first_range[0] + len(get_original_jamo)
+        exact_idx_string_return = exact_idx_string_return[0:begin] + "*" * len(get_original_jamo) + exact_idx_string_return[end:]
+        mecab_word_feature_item.begin = jamo_first_range[0]
+        mecab_word_feature_item.end = jamo_first_range[0] + len(get_original_jamo)
 
         return exact_idx_string_return.replace(NO_JONGSUNG, "")
-    # if exact_idx_string.find(copy_compound_include_item.word) != STRING_NOT_FOUND: #하난데,에서 하나라도 일치하는가?
-    #     if change_compound:
-    #         copy_compound_include_item.begin = index_string
-    #         copy_compound_include_item.end = index_string + len_pattern
-    #     exact_idx_string = delete_pattern_from_string(exact_idx_string, exact_token, 0)
 
     return exact_idx_string
 
@@ -187,6 +162,7 @@ class MecabParser:
         """
         메캅으로 분석한 토큰 제너레이터로 반환 결과 중에 복합여, 굴절형태소 있는 경우 토큰화
         """
+
         exact_idx_string = self.sentence
         for compound_include_item in self.gen_mecab_token_feature():
             if compound_include_item.type in [self.COMPOUND, self.INFLECT]:
@@ -195,7 +171,6 @@ class MecabParser:
                 infect_end = None
                 for idx, compound_item in enumerate(compound_item_list):
                     word, pos_tag, _ = compound_item.split("/")
-
 
                     if compound_include_item.type == MecabParser.INFLECT:  # 굴절어일 경우에 대한 처리
 
@@ -213,13 +188,9 @@ class MecabParser:
 
                         compound_include_item.begin = infect_begin
                         compound_include_item.end = infect_end
-                    #exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
 
-                    # compound_include_item.word = word
-                    # copy_compound_include_item = copy.deepcopy(compound_include_item)
+                    else:
 
-                    # yield word, copy_compound_include_item
-                    else :
                         exact_idx_string = get_exact_idx(compound_include_item, exact_idx_string, word)
 
                     compound_include_item.pos = pos_tag
@@ -233,8 +204,6 @@ class MecabParser:
                                                       exact_idx_string, compound_include_item.word)
 
                 yield compound_include_item.word, compound_include_item
-
-
 
     def gen_mecab_compound_token_feature(self) -> Generator:
 
