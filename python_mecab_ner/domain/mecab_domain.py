@@ -17,7 +17,6 @@ class Category:
     small: str
 
 
-
 class MecabTokenStorage:
     def __init__(self):
         self.core_key_word = defaultdict(Counter)
@@ -70,12 +69,12 @@ class MecabWordFeature:
     start_pos: str
     end_pos: str
     expression: str
-    space: Optional[int] = None
-    mecab_token: Optional[int] = None
-    mecab_compound: Optional[int] = None
-    begin: Optional[int] = None
-    end: Optional[int] = None
-    label: Optional[str] = "O"
+    space: Optional[int] = None # 스페이스 토큰 기준 인덱스
+    mecab_token: Optional[int] = None # 메캅 토큰 기준 인덱스
+    mecab_compound: Optional[int] = None # 메캅에 합성어, 굴절어 있을 때 인덱스
+    begin: Optional[int] = None # 문자열 전체에서 시작 인덱스
+    end: Optional[int] = None #  문자열 전체에서  인덱스
+    label: Optional[str] = "O" # BIO 태그
 
 
 @dataclass
