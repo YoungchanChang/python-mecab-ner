@@ -11,24 +11,22 @@ def test_parser_check(parser_check):
     메캅이 한 단어 일 때 분석하는 경우랑, 문장에서 단어로 쓰여서 다르게 파싱되는 경우에 대한 예시
     """
 
-    mecab_parser = MecabParser()
-
-    result = mecab_parser.get_word_from_mecab_compound(parser_check.get("프룬_word"))
+    result = MecabParser(parser_check.get("프룬_word")).get_word_from_mecab_compound()
     assert result == "프 루 ᆫ"
 
-    result = mecab_parser.get_word_from_mecab_compound(parser_check.get("프룬_sentence"))
+    result = MecabParser(parser_check.get("프룬_sentence")).get_word_from_mecab_compound()
     assert result == "프 룬 이 먹 고 싶 어"
 
-    result = mecab_parser.get_word_from_mecab_compound(parser_check.get("의창지_word"))
+    result = MecabParser(parser_check.get("의창지_word")).get_word_from_mecab_compound()
     assert result == "의창 하 지"
 
-    result = mecab_parser.get_word_from_mecab_compound(parser_check.get("의창지_sentence"))
+    result = MecabParser(parser_check.get("의창지_sentence")).get_word_from_mecab_compound()
     assert result == '의창 지 를 먹 고 싶 어'
 
-    result = mecab_parser.get_word_from_mecab_compound(parser_check.get("금요일_word"))
+    result = MecabParser(parser_check.get("금요일_word")).get_word_from_mecab_compound()
     assert result == '금 요일 에 만나 요'
 
-    result = mecab_parser.get_word_from_mecab_compound(parser_check.get("금요일_sentence"))
+    result = MecabParser(parser_check.get("금요일_sentence")).get_word_from_mecab_compound()
     assert result == '아이유 의 금 요일 에 만나 요 를 듣 으면서 라즈베리 를 먹 을래'
 
 
@@ -41,8 +39,7 @@ def test_gen_mecab_token_feature(mock_mecab_parser_sentence: dict):
     """
 
     # 기본 분해
-    mecab_parser = MecabParser()
-    mecab_parse_results = list(mecab_parser.gen_mecab_token_feature(mock_mecab_parser_sentence.get("병원_sentence")))
+    mecab_parse_results = list(MecabParser(mock_mecab_parser_sentence.get("병원_sentence")).gen_mecab_token_feature())
 
     assert len(mecab_parse_results) == 7
 
@@ -53,7 +50,7 @@ def test_gen_mecab_token_feature(mock_mecab_parser_sentence: dict):
     assert parse_sentence == '나 는 서울대 병원 에 갔 어'
 
     # 복합어 분해 테스트
-    mecab_parse_results = list(mecab_parser.gen_mecab_compound_token_feature(mock_mecab_parser_sentence.get("병원_sentence")))
+    mecab_parse_results = list(MecabParser(mock_mecab_parser_sentence.get("병원_sentence")).gen_mecab_compound_token_feature())
 
     for idx, mecab_parse_item in enumerate(mecab_parse_results):
         assert mecab_parse_item[1].mecab_compound == idx
@@ -62,6 +59,7 @@ def test_gen_mecab_token_feature(mock_mecab_parser_sentence: dict):
 
     parse_sentence = " ".join([x[0] for x in mecab_parse_results])
     assert parse_sentence == '나 는 서울 대 병원 에 가 았 어'
+
 
 def test_mecab_data_read(mecab_ner_dir):
 
@@ -149,7 +147,7 @@ def test_mecab_storage(mock_mecab_parser_sentence):
     assert restore_list == ['그러니까', '전철역이', '그게', '뭐', '어쩌고', '저쩟다는', '거지']
 
     test_sentence = '아~ 제목을 그냥 탄소 아~ 그리고 인간 원리 다중 우주 아~ 이런 제목을 잡았는데 어~ 뭐 뭐 물리학 하시는 분이나 천문학 하시는 분은 딱을 제목만 보고도 아~ 무슨 얘기할 거다라는 걸 아마 짐작을 하실 것 같습니다.'
-    test_mecab_list = list(mecab_parser.gen_mecab_compound_token_feature(test_sentence))
+    test_mecab_list = list(MecabParser(test_sentence).gen_mecab_compound_token_feature())
 
     restore_list = mecab_storage.reverse_compound_tokens(test_mecab_list)
 
